@@ -6,3 +6,5 @@
 *.d
 finder.cpp
 finder.hh
+clipboard.cpp
+analysis.code-workspace

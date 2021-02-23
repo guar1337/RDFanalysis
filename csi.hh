@@ -1,5 +1,5 @@
-#ifndef ui_hh
-#define ui_hh 1
+#ifndef csi_hh
+#define csi_hh 1
 
 #include "/home/zalewski/aku/analysis/constants.h"
 #include "TLorentzVector.h"
@@ -20,7 +20,7 @@
 //global variables used by couple of functions
 	Int_t numberOfThreads;
 	TSelector *selector;	
-	TString raw_data_path = "/home/zalewski/dataTmp/raw/geo" + std::to_string(cs::runNo) + "/";
+	TString raw_data_path = "/home/zalewski/dataTmp/CsI/raw/";
 
 	std::vector<std::string> vecCalibratedColumns{"SQX_L",
 												  "SQY_L",
@@ -45,9 +45,7 @@
 
 //variables used by analysis
 	TRandom3 *rnd;
-	const TLorentzVector lvTar1H(0.0, 0.0, 0.0, cs::mass1H);
-	const TLorentzVector lvTar2H(0.0, 0.0, 0.0, cs::mass2H);
-	TCutG *GCutHe4, *GCutHe6, *GCut2H, *GCut3H;
+
 
 	TELoss siEloss1H, siEloss2H, siEloss3H, siEloss4He, siEloss6He;
 	

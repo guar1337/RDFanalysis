@@ -1,4 +1,3 @@
-#include "/home/zalewski/aku/wrk/constants.h"
 #include "/home/zalewski/aku/analysis/ui.hh"
 
 R__LOAD_LIBRARY(libgsl.so);
@@ -591,7 +590,7 @@ void cleaner(TString inFileName)
 		tdcBinning = 0.0625;
 	}
 	
-	Double_t sqlThreshold = 1.2;
+	Double_t sqlThreshold = 0.1;
 	Double_t sqrThreshold = 2.0;
 
 	inFileName.ReplaceAll("raw","simp");
@@ -657,7 +656,7 @@ ROOT::RDF::RNode ApplyDefines(	ROOT::RDF::RNode df,
 	inputColumn.insert(0, "cal_");
 	//std::cout<<colNames[iii]<<"\t"<<inputColumn<<std::endl;
 	//calling 'Calibrator' so I can pass other info
-	return ApplyDefines(df.Define(inputColumn, Calibrator(iii), {colNames[iii].c_str()}), colNames, iii + 1);
+	return ApplyDefines(df.Define(inputColumn, Calibrator(iii), {colNames[iii]}), colNames, iii + 1);
 }
 
 void calibratorCaller(TString inFileName)
@@ -667,8 +666,13 @@ void calibratorCaller(TString inFileName)
 	ROOT::RDataFrame inDF("cleaned", inFileName.Data());
 	TString outFilename = inFileName.ReplaceAll("cln","cal");
 	// Print columns' names
-	auto dfWithDefines = ApplyDefines(inDF, vecCalibratedColumns);	
-	dfWithDefines.Snapshot("calibrated", outFilename.Data());
+	auto dfWithDefines = ApplyDefines(inDF, vecCalibratedColumns);
+	auto c = dfWithDefines.Count();
+	Int_t customClusterSize = *c / numberOfThreads;
+	std::cout << customClusterSize << std::endl;
+	ROOT::RDF::RSnapshotOptions myOpts;
+	myOpts.fAutoFlush=customClusterSize;
+	dfWithDefines.Snapshot("calibrated", outFilename.Data(), dfWithDefines.GetColumnNames(), myOpts);
 }
 
 void translator(TString inFileName)
@@ -709,31 +713,31 @@ void analysis(TString inFileName)
 	siEloss1H.AddEL(14., 28.086, 1);  //Z, mass
 	siEloss1H.SetZP(1., 1.);		//Z, A
 	siEloss1H.SetEtab(100000, 200.);	// ?, MeV calculate ranges
-	siEloss1H.SetDeltaEtab(300);
+	siEloss1H.SetDeltaEtab(100);
 
 	siEloss2H.SetEL(1, 2.330); // density in g/cm3
 	siEloss2H.AddEL(14., 28.086, 1);  //Z, mass
 	siEloss2H.SetZP(1., 2.);		//Z, A
 	siEloss2H.SetEtab(100000, 200.);	// ?, MeV calculate ranges
-	siEloss2H.SetDeltaEtab(300);
+	siEloss2H.SetDeltaEtab(100);
 
 	siEloss3H.SetEL(1, 2.330); // density in g/cm3
 	siEloss3H.AddEL(14., 28.086, 1);  //Z, mass
 	siEloss3H.SetZP(1., 3.);		//Z, A
 	siEloss3H.SetEtab(100000, 200.);	// ?, MeV calculate ranges
-	siEloss3H.SetDeltaEtab(300);
+	siEloss3H.SetDeltaEtab(100);
 
 	siEloss4He.SetEL(1, 2.330); // density in g/cm3
 	siEloss4He.AddEL(14., 28.086, 1);  //Z, mass
 	siEloss4He.SetZP(2., 4.);		//Z, A
 	siEloss4He.SetEtab(100000, 200.);	// ?, MeV calculate ranges
-	siEloss4He.SetDeltaEtab(300);
+	siEloss4He.SetDeltaEtab(100);
 
 	siEloss6He.SetEL(1, 2.330); // density in g/cm3
 	siEloss6He.AddEL(14., 28.086, 1);  //Z, mass
 	siEloss6He.SetZP(2., 6.);		//Z, A
 	siEloss6He.SetEtab(100000, 200.);	// ?, MeV calculate ranges
-	siEloss6He.SetDeltaEtab(300);
+	siEloss6He.SetDeltaEtab(100);
 
 	Double_t qDT_45 = cs::Qdt;
 	Double_t qDT_0 = 0.0;
@@ -826,13 +830,13 @@ void analysis(TString inFileName)
 					 .Define("sqlde", [](ROOT::VecOps::RVec<Double_t> &SQX_L, Int_t stripNumber){return SQX_L[stripNumber];}, {"cal_SQX_L", "SQX_L_strip"})
 					 .Define("sqrde", [](ROOT::VecOps::RVec<Double_t> &SQX_R, Int_t stripNumber){return SQX_R[stripNumber];}, {"cal_SQX_R", "SQX_R_strip"})
 					 .Define("sqletot", [](ROOT::VecOps::RVec<Double_t> &CsI_L, Int_t stripNumber){return CsI_L[stripNumber];}, {"cal_CsI_L", "CsI_L_strip"})
-					  .Define("sqretot", [](ROOT::VecOps::RVec<Double_t> &CsI_R, Int_t stripNumber){return CsI_R[stripNumber];}, {"cal_CsI_R", "CsI_R_strip"})
+					.Define("sqretot", [](ROOT::VecOps::RVec<Double_t> &CsI_R, Int_t stripNumber){return CsI_R[stripNumber];}, {"cal_CsI_R", "CsI_R_strip"})
 
-					 //.Define("sqletotp", [](Double_t sqlde){return sqlde - siEloss1H.GetE0dE(sqlde, 1000.0);}, {"sqlde"})
-					 //.Define("sqletotd", [](Double_t sqlde){return sqlde - siEloss2H.GetE0dE(sqlde, 1000.0);}, {"sqlde"})
-					 //.Define("sqletott", [](Double_t sqlde){return sqlde - siEloss3H.GetE0dE(sqlde, 1000.0);}, {"sqlde"})
-					 //.Define("sqretot4", [](Double_t sqrde){return sqrde - siEloss4He->GetE(sqrde, 1000.0);}, {"sqrde"})
-					 //.Define("sqretot6", [](Double_t sqrde){return sqrde - siEloss6He->GetE(sqrde, 1000.0);}, {"sqrde"})
+					 .Define("sqletotp", [](Double_t sqlde, Double_t sq300){return siEloss1H.GetE0dE(sqlde+sq300, 1000.0);}, {"sqlde", "sq300"})
+					 //.Define("sqletotd", [](Double_t sqlde, Double_t sq300){return siEloss3H.GetE0dE(sqlde+sq300, 1000.0);}, {"sqlde", "sq300"})
+					 .Define("sqletott", [](Double_t sqlde, Double_t sq300){return siEloss3H.GetE0dE(sqlde+sq300, 1000.0);}, {"sqlde", "sq300"})
+					 .Define("sqretot4", [](Double_t sqrde){return siEloss4He.GetE0dE(sqrde, 1000.0);}, {"sqrde"})
+					 //.Define("sqretot6", [](Double_t sqrde){return siEloss6He->GetE(sqrde, 1000.0);}, {"sqrde"})
 
 					 .Define("sqltime", [](ROOT::VecOps::RVec<unsigned short> &tSQX_L, Int_t stripNumber){return tSQX_L[stripNumber];}, {"tSQX_L", "SQX_L_strip"})
 					 .Define("sqrtime", [](ROOT::VecOps::RVec<unsigned short> &tSQX_R, Int_t stripNumber){return tSQX_R[stripNumber];}, {"tSQX_R", "SQX_R_strip"})
@@ -875,14 +879,17 @@ void analysis(TString inFileName)
 */
 
 
+
 outDF.Snapshot("analyzed", outFilename.Data());
 }
 
 void ui()
-{	
-	printf("EnePT: %f\tEneDT: %f\n", cs::Qpt, cs::Qdt);
-	rnd = new TRandom3();
+{
 	ROOT::EnableImplicitMT();
+	numberOfThreads = 20;
+	TStopwatch *stopwatch = new TStopwatch();
+	
+	rnd = new TRandom3();
 	selector = TSelector::GetSelector("/home/zalewski/aku/analysis/simplifier123.C");
 	std::cout<<"..."<<std::endl<<".."<<std::endl<<"."<<std::endl;
 
@@ -908,7 +915,8 @@ void ui()
 			//translator(inputFilePath);
 			//cleaner(inputFilePath);
 			//calibratorCaller(inputFilePath);
-			analysis(inputFilePath);
+			//analysis(inputFilePath);
 		}
 	}
+	stopwatch->Print();
 }

@@ -48,7 +48,6 @@ public :
    TTreeReaderArray<unsigned short> NeEvent_F6 = {fReader, "NeEvent.F6[4]"};
    TTreeReaderArray<unsigned short> NeEvent_tF6 = {fReader, "NeEvent.tF6[4]"};
    TTreeReaderArray<unsigned short> NeEvent_tMWPC = {fReader, "NeEvent.tMWPC[4]"};
-   TTreeReaderArray<unsigned int> NeEvent_scaler = {fReader, "NeEvent.scaler[16]"};
    TTreeReaderValue<unsigned short> NeEvent_nx1 = {fReader, "NeEvent.nx1"};
    TTreeReaderValue<unsigned short> NeEvent_ny1 = {fReader, "NeEvent.ny1"};
    TTreeReaderValue<unsigned short> NeEvent_nx2 = {fReader, "NeEvent.nx2"};
@@ -57,10 +56,6 @@ public :
    TTreeReaderArray<unsigned short> NeEvent_y1 = {fReader, "NeEvent.y1[32]"};
    TTreeReaderArray<unsigned short> NeEvent_x2 = {fReader, "NeEvent.x2[32]"};
    TTreeReaderArray<unsigned short> NeEvent_y2 = {fReader, "NeEvent.y2[32]"};
-   TTreeReaderValue<unsigned int> NeEvent_rx1 = {fReader, "NeEvent.rx1"};
-   TTreeReaderValue<unsigned int> NeEvent_rx2 = {fReader, "NeEvent.rx2"};
-   TTreeReaderValue<unsigned int> NeEvent_ry1 = {fReader, "NeEvent.ry1"};
-   TTreeReaderValue<unsigned int> NeEvent_ry2 = {fReader, "NeEvent.ry2"};
    TTreeReaderValue<Int_t> NeEvent_trigger = {fReader, "NeEvent.trigger"};
    
 
