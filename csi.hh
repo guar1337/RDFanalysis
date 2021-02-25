@@ -45,7 +45,7 @@
 
 //variables used by analysis
 	TRandom3 *rnd;
-
+	TCutG *GCutHe4, *GCutHe6, *GCut2H, *GCut3H, *GCutLi7, *GCutLi8, *GCutLi9;
 
 	TELoss siEloss1H, siEloss2H, siEloss3H, siEloss4He, siEloss6He;
 	

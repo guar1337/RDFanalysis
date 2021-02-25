@@ -107,6 +107,9 @@ namespace cs
 	static const float 		mass5He = 5012057 * u_to_MeV/1000000.0;
 	static const float 		mass6He = 6018885.89 * u_to_MeV/1000000.0;
 	static const float 		mass7He = 7027991 * u_to_MeV/1000000.0;
+	static const float 		mass7Li = 7016003.437 * u_to_MeV/1000000.0;
+	static const float 		mass8Li = 8022486.25 * u_to_MeV/1000000.0;
+	static const float 		mass9Li = 9026790.19 * u_to_MeV/1000000.0;
 	static const float		Qpt		= (mass1H + mass6He) - (mass3H + mass4He);
 	static const float		Qdt		= (mass2H + mass6He) - (mass3H + mass5He);
 

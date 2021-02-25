@@ -51,6 +51,49 @@ void loadParameters()
 	}
 }
 
+Double_t getBeamMass(Int_t m_h2, Int_t m_h3, Int_t m_he4, Int_t m_he6, Int_t m_li7, Int_t m_li8, Int_t m_li9)
+{
+	Double_t m_ionBeamMass;
+	std::vector<Int_t> m_beamCutsArray = {m_h2, m_h3, m_he4, m_he6, m_li7, m_li8, m_li9};
+	switch (std::distance(m_beamCutsArray.begin(),std::max_element(m_beamCutsArray.begin(), m_beamCutsArray.end())))
+	{
+		//helium6 goes first because there's most of it
+	case 3:
+		m_ionBeamMass = cs::mass6He;
+		break;
+		
+	case 0:
+		m_ionBeamMass = cs::mass2H;
+		break;
+
+	case 1:
+		m_ionBeamMass = cs::mass3H;
+		break;
+		
+	case 2:
+		m_ionBeamMass = cs::mass4He;
+		break;
+
+	case 4:
+		m_ionBeamMass = cs::mass7Li;
+		break;
+		
+	case 5:
+		m_ionBeamMass = cs::mass8Li;
+		break;
+
+	case 6:
+		m_ionBeamMass = cs::mass9Li;
+		break;
+	
+	default:
+		break;
+	}
+
+	
+	return m_ionBeamMass;
+}
+
 Int_t getStripNumber(ROOT::VecOps::RVec<Double_t> &inputArray)
 {
 	return std::distance(inputArray.begin(),std::max_element(inputArray.begin(), inputArray.end()));
@@ -80,11 +123,11 @@ TVector3 getBeamVector(Double_t m_MWPC_1_X, Double_t m_MWPC_1_Y, Double_t m_MWPC
 	return m_beamVector;
 }
 
-Double_t getKineticEnergy(Double_t m_tof)
+Double_t getKineticEnergy(Double_t m_tof, Double_t m_beamMass)
 {
 	Double_t m_beta_squared= pow((cs::tofBase/m_tof)/cs::c, 2.0);
 	Double_t m_gamma=1.0/sqrt(1.0-m_beta_squared);
-	return cs::mass6He*(m_gamma-1.0);
+	return m_beamMass*(m_gamma-1.0);
 }
 
 bool filterToF(ROOT::VecOps::RVec<unsigned short> &timeF3, ROOT::VecOps::RVec<unsigned short> &timeF5)
@@ -264,6 +307,15 @@ ROOT::RDF::RNode ApplyDefines(	ROOT::RDF::RNode df,
 	//recursive function updating RDataFrame over scope of std::vector with column names for calibration
 	if (iii == colNames.size())
 	{
+		TFile cutgFile("/home/zalewski/aku/analysis/tofCuts.root","READ");
+		GCutHe4 = (TCutG*)cutgFile.Get("he4");
+		GCutHe6 = (TCutG*)cutgFile.Get("he6");
+		GCut2H = (TCutG*)cutgFile.Get("h2");
+		GCut3H = (TCutG*)cutgFile.Get("h3");
+		GCutLi7 = (TCutG*)cutgFile.Get("li7");
+		GCutLi8 = (TCutG*)cutgFile.Get("li8");
+		GCutLi9 = (TCutG*)cutgFile.Get("li9");
+		
 		return df.Define("tof", calculateToF, {"tdcF3", "tdcF5"})
 				 .Define("aF5", "(F5[0]+F5[1]+F5[2]+F5[3])/4.0")
 				 .Define("MWPC_1_X", getMWPCpos(0),{"x1","nx1"})
@@ -279,7 +331,20 @@ ROOT::RDF::RNode ApplyDefines(	ROOT::RDF::RNode df,
 				 .Define("sqletot", [](ROOT::VecOps::RVec<Double_t> &CsI_L, Int_t stripNumber){return CsI_L[stripNumber];}, {"cal_CsI_L", "CsI_L_strip"})
 				 .Define("sqretot", [](ROOT::VecOps::RVec<Double_t> &CsI_R, Int_t stripNumber){return CsI_R[stripNumber];}, {"cal_CsI_R", "CsI_R_strip"})
 				 .Define("sqletotr", [](ROOT::VecOps::RVec<UShort_t> &CsI_L, Int_t stripNumber){return CsI_L[stripNumber];}, {"CsI_L", "CsI_L_strip"})
-				 .Define("sqretotr", [](ROOT::VecOps::RVec<UShort_t> &CsI_R, Int_t stripNumber){return CsI_R[stripNumber];}, {"CsI_R", "CsI_R_strip"});
+				 .Define("sqretotr", [](ROOT::VecOps::RVec<UShort_t> &CsI_R, Int_t stripNumber){return CsI_R[stripNumber];}, {"CsI_R", "CsI_R_strip"})
+				 .Define("sqldeT", [](ROOT::VecOps::RVec<UShort_t> &tSQX_L, Int_t stripNumber){return tSQX_L[stripNumber];}, {"tSQX_L", "SQX_L_strip"})
+				 .Define("sqrdeT", [](ROOT::VecOps::RVec<UShort_t> &tSQX_R, Int_t stripNumber){return tSQX_R[stripNumber];}, {"tSQX_R", "SQX_R_strip"})
+				 .Define("sqletotT", [](ROOT::VecOps::RVec<UShort_t> &tCsI_L, Int_t stripNumber){return tCsI_L[stripNumber];}, {"tCsI_L", "CsI_L_strip"})
+				 .Define("sqretotT", [](ROOT::VecOps::RVec<UShort_t> &tCsI_R, Int_t stripNumber){return tCsI_R[stripNumber];}, {"tCsI_R", "CsI_R_strip"})
+				 .Define("h2", [](Double_t tof, Double_t aF5){return GCut2H->IsInside(tof,aF5);}, {"tof","aF5"})
+				 .Define("h3", [](Double_t tof, Double_t aF5){return GCut3H->IsInside(tof,aF5);}, {"tof","aF5"})
+				 .Define("he4", [](Double_t tof, Double_t aF5){return GCutHe4->IsInside(tof,aF5);}, {"tof","aF5"})
+				 .Define("he6", [](Double_t tof, Double_t aF5){return GCutHe6->IsInside(tof,aF5);}, {"tof","aF5"})
+				 .Define("li7", [](Double_t tof, Double_t aF5){return GCutLi7->IsInside(tof,aF5);}, {"tof","aF5"})
+				 .Define("li8", [](Double_t tof, Double_t aF5){return GCutLi8->IsInside(tof,aF5);}, {"tof","aF5"})
+				 .Define("li9", [](Double_t tof, Double_t aF5){return GCutLi9->IsInside(tof,aF5);}, {"tof","aF5"})
+				 .Define("beamMass", getBeamMass, {"h2", "h3", "he4", "he6", "li7", "li8", "li9"})
+				 .Define("kinE", [](Double_t ToF, Double_t beamMass){return getKineticEnergy(ToF, beamMass);},{"tof","beamMass"});
 	}
 
 	std::string inputColumn = colNames[iii];
@@ -296,6 +361,8 @@ void calibratorCaller(TString inFileName)
 	ROOT::RDataFrame inDF("cleaned", inFileName.Data());
 	TString outFilename = inFileName.ReplaceAll("cln","cal");
 	// Print columns' names
+
+
 	auto dfWithDefines = ApplyDefines(inDF, vecCalibratedColumns);
 	auto c = dfWithDefines.Count();
 	Int_t customClusterSize = *c / numberOfThreads;
@@ -335,7 +402,8 @@ void cleaner(TString inFileName)
 						  .Filter(filterMWPC(1),{"y1","ny1"})
 						  .Filter(filterMWPC(2),{"x2","nx2"})
 						  .Filter(filterMWPC(3),{"y2","ny2"})
-						  .Filter(filterToF,{"tdcF3", "tdcF5"});
+						  .Filter(filterToF,{"tdcF3", "tdcF5"})
+						  .Filter("(F5[0]||F5[1]||F5[2]||F5[3])>0");
 
 	outDF.Snapshot("cleaned", outFilename.Data());
 }
@@ -346,12 +414,6 @@ void analysis(TString inFileName)
 	ROOT::RDataFrame inDF("calibrated", inFileName.Data());
 	TString outFilename = inFileName.ReplaceAll("cal","dE");
 	std::cout<<"Analysing "<<inFileName<<std::endl;
-	inDF.Define("CsI_L_strip", getStripNumber, {"cal_CsI_L"})
-		.Define("CsI_R_strip", getStripNumber, {"cal_CsI_R"})
-		.Define("sqletot", [](ROOT::VecOps::RVec<Double_t> &CsI_L, Int_t stripNumber){return CsI_L[stripNumber];}, {"CsI_L", "CsI_L_strip"})
-		.Define("sqretot", [](ROOT::VecOps::RVec<Double_t> &CsI_R, Int_t stripNumber){return CsI_R[stripNumber];}, {"CsI_R", "CsI_R_strip"})
-		.Define("kinE", [](Double_t ToF){return getKineticEnergy(ToF);},{"tof"});
-
 
 
 }
