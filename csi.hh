@@ -47,7 +47,8 @@
 	TRandom3 *rnd;
 	TCutG *GCutHe4, *GCutHe6, *GCut2H, *GCut3H, *GCutLi7, *GCutLi8, *GCutLi9;
 
-	TELoss siEloss1H, siEloss2H, siEloss3H, siEloss4He, siEloss6He;
+	AELC *siEloss1H, *siEloss2H, *siEloss3H, *siEloss4He, *siEloss6He, *siEloss7Li, *siEloss8Li, *siEloss9Li;
+	TELoss *siTEloss1H, *siTEloss2H, *siTEloss3H, *siTEloss4He, *siTEloss6He, *siTEloss7Li, *siTEloss8Li, *siTEloss9Li;
 	
 	//TVector3
 

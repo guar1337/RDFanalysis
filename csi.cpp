@@ -51,47 +51,54 @@ void loadParameters()
 	}
 }
 
-Double_t getBeamMass(Int_t m_h2, Int_t m_h3, Int_t m_he4, Int_t m_he6, Int_t m_li7, Int_t m_li8, Int_t m_li9)
+Double_t getdEfromKinE(std::vector<Int_t> m_beamCutsArray, Double_t m_kinE)
 {
-	Double_t m_ionBeamMass;
-	std::vector<Int_t> m_beamCutsArray = {m_h2, m_h3, m_he4, m_he6, m_li7, m_li8, m_li9};
-	switch (std::distance(m_beamCutsArray.begin(),std::max_element(m_beamCutsArray.begin(), m_beamCutsArray.end())))
-	{
+	Int_t ionID = std::distance(m_beamCutsArray.begin(),std::max_element(m_beamCutsArray.begin(), m_beamCutsArray.end()));
+	Double_t dEinSi;
+
+	switch (ionID)
+		{
 		//helium6 goes first because there's most of it
 	case 3:
-		m_ionBeamMass = cs::mass6He;
+		// /printf("kinE in 6He = %f\n", m_kinE);
+		dEinSi = m_kinE - siEloss6He->GetE(m_kinE, 1000.0);		
 		break;
 		
 	case 0:
-		m_ionBeamMass = cs::mass2H;
+		dEinSi = m_kinE - siEloss2H->GetE(m_kinE, 1000.0);
 		break;
 
 	case 1:
-		m_ionBeamMass = cs::mass3H;
+		dEinSi = m_kinE - siEloss3H->GetE(m_kinE, 1000.0);
 		break;
 		
 	case 2:
-		m_ionBeamMass = cs::mass4He;
+		dEinSi = m_kinE - siEloss4He->GetE(m_kinE, 1000.0);
 		break;
 
 	case 4:
-		m_ionBeamMass = cs::mass7Li;
+		dEinSi = m_kinE - siEloss7Li->GetE(m_kinE, 1000.0);
 		break;
 		
 	case 5:
-		m_ionBeamMass = cs::mass8Li;
+		dEinSi = m_kinE - siEloss8Li->GetE(m_kinE, 1000.0);
 		break;
 
 	case 6:
-		m_ionBeamMass = cs::mass9Li;
+		dEinSi = m_kinE - siEloss9Li->GetE(m_kinE, 1000.0);
 		break;
 	
 	default:
+		std::cout<<"No ion in the beam"<<std::endl;
 		break;
 	}
+	return dEinSi;
+}
 
-	
-	return m_ionBeamMass;
+std::vector<Int_t> getBeamCutsArray(Int_t m_h2, Int_t m_h3, Int_t m_he4, Int_t m_he6, Int_t m_li7, Int_t m_li8, Int_t m_li9)
+{
+	std::vector<Int_t> m_beamCutsArray = {m_h2, m_h3, m_he4, m_he6, m_li7, m_li8, m_li9};
+	return m_beamCutsArray;
 }
 
 Int_t getStripNumber(ROOT::VecOps::RVec<Double_t> &inputArray)
@@ -123,11 +130,64 @@ TVector3 getBeamVector(Double_t m_MWPC_1_X, Double_t m_MWPC_1_Y, Double_t m_MWPC
 	return m_beamVector;
 }
 
-Double_t getKineticEnergy(Double_t m_tof, Double_t m_beamMass)
+Double_t getKineticEnergy(Double_t m_tof, std::vector<Int_t> m_beamCutsArray)
 {
+	Double_t m_ionBeamMass, m_kinE;
 	Double_t m_beta_squared= pow((cs::tofBase/m_tof)/cs::c, 2.0);
 	Double_t m_gamma=1.0/sqrt(1.0-m_beta_squared);
-	return m_beamMass*(m_gamma-1.0);
+
+	Int_t ionID = std::distance(m_beamCutsArray.begin(),std::max_element(m_beamCutsArray.begin(), m_beamCutsArray.end()));
+	
+	switch (ionID)
+	{
+		//helium6 goes first because there's most of it
+	case 3:
+		m_ionBeamMass = cs::mass6He;
+		m_kinE = m_ionBeamMass*(m_gamma-1.0);
+		m_kinE = siEloss6He->GetE(m_kinE, 400.0);
+		break;
+		
+	case 0:
+		m_ionBeamMass = cs::mass2H;
+		m_kinE = m_ionBeamMass*(m_gamma-1.0);
+		m_kinE = siEloss2H->GetE(m_kinE, 400.0);
+		break;
+
+	case 1:
+		m_ionBeamMass = cs::mass3H;
+		m_kinE = m_ionBeamMass*(m_gamma-1.0);
+		m_kinE = siEloss3H->GetE(m_kinE, 400.0);
+		break;
+		
+	case 2:
+		m_ionBeamMass = cs::mass4He;
+		m_kinE = m_ionBeamMass*(m_gamma-1.0);
+		m_kinE = siEloss4He->GetE(m_kinE, 400.0);
+		break;
+
+	case 4:
+		m_ionBeamMass = cs::mass7Li;
+		m_kinE = m_ionBeamMass*(m_gamma-1.0);
+		m_kinE = siEloss7Li->GetE(m_kinE, 400.0);
+		break;
+		
+	case 5:
+		m_ionBeamMass = cs::mass8Li;
+		m_kinE = m_ionBeamMass*(m_gamma-1.0);
+		m_kinE = siEloss8Li->GetE(m_kinE, 400.0);
+		break;
+
+	case 6:
+		m_ionBeamMass = cs::mass9Li;
+		m_kinE = m_ionBeamMass*(m_gamma-1.0);
+		m_kinE = siEloss9Li->GetE(m_kinE, 400.0);
+		break;
+	
+	default:
+		std::cout<<"No ion in the beam"<<std::endl;
+		break;
+	}
+	return m_kinE;
 }
 
 bool filterToF(ROOT::VecOps::RVec<unsigned short> &timeF3, ROOT::VecOps::RVec<unsigned short> &timeF5)
@@ -343,8 +403,8 @@ ROOT::RDF::RNode ApplyDefines(	ROOT::RDF::RNode df,
 				 .Define("li7", [](Double_t tof, Double_t aF5){return GCutLi7->IsInside(tof,aF5);}, {"tof","aF5"})
 				 .Define("li8", [](Double_t tof, Double_t aF5){return GCutLi8->IsInside(tof,aF5);}, {"tof","aF5"})
 				 .Define("li9", [](Double_t tof, Double_t aF5){return GCutLi9->IsInside(tof,aF5);}, {"tof","aF5"})
-				 .Define("beamMass", getBeamMass, {"h2", "h3", "he4", "he6", "li7", "li8", "li9"})
-				 .Define("kinE", [](Double_t ToF, Double_t beamMass){return getKineticEnergy(ToF, beamMass);},{"tof","beamMass"});
+				 .Define("beamCutsArray", getBeamCutsArray, {"h2", "h3", "he4", "he6", "li7", "li8", "li9"})
+				 .Define("kinE", [](Double_t ToF, std::vector<Int_t> beamMass){return getKineticEnergy(ToF, beamMass);},{"tof","beamCutsArray"});
 	}
 
 	std::string inputColumn = colNames[iii];
@@ -361,7 +421,13 @@ void calibratorCaller(TString inFileName)
 	ROOT::RDataFrame inDF("cleaned", inFileName.Data());
 	TString outFilename = inFileName.ReplaceAll("cln","cal");
 	// Print columns' names
-
+	siEloss2H = new ELC(2, 1, si_Nel, 2.35, si_A, si_Z, si_W, 150.,5000);
+	siEloss3H = new ELC(3, 1, si_Nel, 2.35, si_A, si_Z, si_W, 100.,5000);
+	siEloss4He = new ELC(4, 2, si_Nel, 2.35, si_A, si_Z, si_W, 300.,5000);
+	siEloss6He = new ELC(6, 2, si_Nel, 2.35, si_A, si_Z, si_W, 200.,5000);
+	siEloss7Li = new ELC(7, 3, si_Nel, 2.35, si_A, si_Z, si_W, 350.,5000);
+	siEloss8Li = new ELC(8, 3, si_Nel, 2.35, si_A, si_Z, si_W, 300.,5000);
+	siEloss9Li = new ELC(9, 3, si_Nel, 2.35, si_A, si_Z, si_W, 300.,5000);
 
 	auto dfWithDefines = ApplyDefines(inDF, vecCalibratedColumns);
 	auto c = dfWithDefines.Count();
@@ -369,9 +435,18 @@ void calibratorCaller(TString inFileName)
 	std::cout << customClusterSize << std::endl;
 	ROOT::RDF::RSnapshotOptions myOpts;
 	myOpts.fAutoFlush=customClusterSize;
-	dfWithDefines.Snapshot("calibrated", outFilename.Data(), dfWithDefines.GetColumnNames(), myOpts);
-}
+	auto newDataFrame = dfWithDefines.Filter("(h2 || h3 || he4 || he6 || li7 || li8 || li9)")
+									 .Filter("sqlde>0 || sqrde>0");
+	newDataFrame.Snapshot("calibrated", outFilename.Data(), dfWithDefines.GetColumnNames(), myOpts);
 
+	delete siEloss2H;
+	delete siEloss3H;
+	delete siEloss4He;
+	delete siEloss6He;
+	delete siEloss7Li;
+	delete siEloss8Li;
+	delete siEloss9Li;
+}
 
 void translator(TString inFileName)
 {
@@ -415,6 +490,64 @@ void analysis(TString inFileName)
 	TString outFilename = inFileName.ReplaceAll("cal","dE");
 	std::cout<<"Analysing "<<inFileName<<std::endl;
 
+	siEloss2H = new ELC(2, 1, si_Nel, 2.35, si_A, si_Z, si_W, 150.,5000);
+	siEloss3H = new ELC(3, 1, si_Nel, 2.35, si_A, si_Z, si_W, 100.,5000);
+	siEloss4He = new ELC(4, 2, si_Nel, 2.35, si_A, si_Z, si_W, 300.,5000);
+	siEloss6He = new ELC(6, 2, si_Nel, 2.35, si_A, si_Z, si_W, 200.,5000);
+	siEloss7Li = new ELC(7, 3, si_Nel, 2.35, si_A, si_Z, si_W, 350.,5000);
+	siEloss8Li = new ELC(8, 3, si_Nel, 2.35, si_A, si_Z, si_W, 300.,5000);
+	siEloss9Li = new ELC(9, 3, si_Nel, 2.35, si_A, si_Z, si_W, 300.,5000);
+
+	siTEloss2H.SetEL(1, 2.330); // density in g/cm3
+	siTEloss2H.AddEL(14., 28.086, 1);  //Z, mass
+	siTEloss2H.SetZP(1., 2.);		//Z, A
+	siTEloss2H.SetEtab(100000, 200.);	// ?, MeV calculate ranges
+	siTEloss2H.SetDeltaEtab(100);
+
+	siTEloss3H.SetEL(1, 2.330); // density in g/cm3
+	siTEloss3H.AddEL(14., 28.086, 1);  //Z, mass
+	siTEloss3H.SetZP(1., 3.);		//Z, A
+	siTEloss3H.SetEtab(100000, 200.);	// ?, MeV calculate ranges
+	siTEloss3H.SetDeltaEtab(100);
+
+	siTEloss4He.SetEL(1, 2.330); // density in g/cm3
+	siTEloss4He.AddEL(14., 28.086, 1);  //Z, mass
+	siTEloss4He.SetZP(2., 4.);		//Z, A
+	siTEloss4He.SetEtab(100000, 200.);	// ?, MeV calculate ranges
+	siTEloss4He.SetDeltaEtab(100);
+
+	siTEloss6He.SetEL(1, 2.330); // density in g/cm3
+	siTEloss6He.AddEL(14., 28.086, 1);  //Z, mass
+	siTEloss6He.SetZP(2., 4.);		//Z, A
+	siTEloss6He.SetEtab(100000, 200.);	// ?, MeV calculate ranges
+	siTEloss6He.SetDeltaEtab(100);
+
+	siTEloss7Li.SetEL(1, 2.330); // density in g/cm3
+	siTEloss7Li.AddEL(14., 28.086, 1);  //Z, mass
+	siTEloss7Li.SetZP(2., 4.);		//Z, A
+	siTEloss7Li.SetEtab(100000, 200.);	// ?, MeV calculate ranges
+	siTEloss7Li.SetDeltaEtab(100);
+
+	siTEloss8Li.SetEL(1, 2.330); // density in g/cm3
+	siTEloss8Li.AddEL(14., 28.086, 1);  //Z, mass
+	siTEloss8Li.SetZP(2., 4.);		//Z, A
+	siTEloss8Li.SetEtab(100000, 200.);	// ?, MeV calculate ranges
+	siTEloss8Li.SetDeltaEtab(100);
+
+	siTEloss9Li.SetEL(1, 2.330); // density in g/cm3
+	siTEloss9Li.AddEL(14., 28.086, 1);  //Z, mass
+	siTEloss9Li.SetZP(2., 4.);		//Z, A
+	siTEloss9Li.SetEtab(100000, 200.);	// ?, MeV calculate ranges
+	siTEloss9Li.SetDeltaEtab(100);
+
+
+
+	inDF.Filter("(h2 || h3 || he4 || he6 || li7 || li8 || li9)")
+		.Filter("sqlde>0 || sqrde>0");
+
+	auto outDF = inDF.Define("dEfromKinE", getdEfromKinE, {"beamCutsArray","kinE"});
+
+	outDF.Snapshot("analyzed", outFilename.Data());
 
 }
 
@@ -445,7 +578,7 @@ void csi()
 			//translator(inputFilePath);
 			//cleaner(inputFilePath);
 			calibratorCaller(inputFilePath);
-			//analysis(inputFilePath);
+			analysis(inputFilePath);
 
 		}
 	}

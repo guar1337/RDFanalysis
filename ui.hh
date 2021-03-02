@@ -47,8 +47,7 @@
 	TRandom3 *rnd;
 	const TLorentzVector lvTar1H(0.0, 0.0, 0.0, cs::mass1H);
 	const TLorentzVector lvTar2H(0.0, 0.0, 0.0, cs::mass2H);
-	TCutG *GCutHe4, *GCutHe6, *GCut2H, *GCut3H;
-
+	TCutG *GCutHe4, *GCutHe6, *GCutdE2H, *GCutdE3H, *GCutangAngPT, *GCutlangEPT, *GCutrangEPT, *GCutangAngPP, *GCutangAngDD, *GCutlangEPP, *GCutlangEDD;
 	TELoss siEloss1H, siEloss2H, siEloss3H, siEloss4He, siEloss6He;
 	
 	//TVector3

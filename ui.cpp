@@ -309,7 +309,7 @@ bool filterLeftDetector(ROOT::VecOps::RVec<Double_t> &leftDetectorArray)
 	auto leftDetectorArraySize = leftDetectorArray.size();
 	for (size_t iii = 0; iii < leftDetectorArraySize; iii++)
 	{
-		if (leftDetectorArray[iii]>1.2)
+		if (leftDetectorArray[iii]>0.1)
 		{
 			aboveThresholdEventCounter++;
 		}
@@ -699,8 +699,15 @@ void analysis(TString inFileName)
 	TFile cutgFile("/home/zalewski/aku/analysis/gcuts.root","READ");
 	GCutHe4 = (TCutG*)cutgFile.Get("dehe4");
 	GCutHe6 = (TCutG*)cutgFile.Get("dehe6");
-	GCut2H = (TCutG*)cutgFile.Get("dd");
-	GCut3H = (TCutG*)cutgFile.Get("tt");
+	GCutdE2H = (TCutG*)cutgFile.Get("de2H");
+	GCutdE3H = (TCutG*)cutgFile.Get("de3H");
+	GCutangAngPT = (TCutG*)cutgFile.Get("angAngPT");
+	GCutangAngPP = (TCutG*)cutgFile.Get("angAngPP");
+	GCutangAngDD = (TCutG*)cutgFile.Get("angAngDD");
+	GCutlangEPT = (TCutG*)cutgFile.Get("langEPT");
+	GCutrangEPT = (TCutG*)cutgFile.Get("rangEPT");
+	GCutlangEPP = (TCutG*)cutgFile.Get("langEPP");
+	GCutlangEDD = (TCutG*)cutgFile.Get("langEDD");
 
 	AELC *h1_Si = new ELC(1, 1, si_Nel, 2.35, si_A, si_Z, si_W, 500.,1500);
 	AELC *h2_Si = new ELC(2, 1, si_Nel, 2.35, si_A, si_Z, si_W, 500.,1500);
@@ -759,42 +766,42 @@ void analysis(TString inFileName)
 
 		case 1:
 		{
-			tarPos = 10.0;
+			tarPos = 0.0;
 			tarThickness = 80.0 + cs::tarThicknessShift;
 			tarAngle = 45.0 * TMath::DegToRad();
 
 			sqlAng = (65.0 + 0.0) * TMath::DegToRad();
 			sqlDist = 170.0;
 			
-			sqrAng = (15.0 + -0.192) * TMath::DegToRad();
+			sqrAng = (15.0 + 0.0) * TMath::DegToRad();
 			sqrDist = 250.0;
 			break;
 		}
 
 		case 2:
 		{
-			tarPos = 10.0 + 2.0;
+			tarPos = 0.0 + 2.0;
 			tarThickness = 160 + 2*cs::tarThicknessShift;
 			tarAngle = 6.0 * TMath::DegToRad();
 
-			sqlAng = (50.0 + 0.536) * TMath::DegToRad();
+			sqlAng = (50.0 + 0.0) * TMath::DegToRad();
 			sqlDist = 170.0;
 
-			sqrAng = (15.0 + 0.275) * TMath::DegToRad();
+			sqrAng = (15.0 + 0.0) * TMath::DegToRad();
 			sqrDist = 250.0;
 			break;
 		}
 
 		case 3:
 		{
-			tarPos = 10.0 + 2.0;
+			tarPos = 0.0 + 2.0;
 			tarThickness = 160 + 2*cs::tarThicknessShift;
 			tarAngle = 0.0 * TMath::DegToRad();
 
-			sqlAng = (35.0 + 0.536) * TMath::DegToRad();
+			sqlAng = (35.0 + 0.0) * TMath::DegToRad();
 			sqlDist = 170.0;
 
-			sqrAng = (15.0 + 0.275) * TMath::DegToRad();
+			sqrAng = (15.0 + 0.0) * TMath::DegToRad();
 			sqrDist = 250.0;
 			break;
 		}
@@ -832,10 +839,10 @@ void analysis(TString inFileName)
 					 .Define("sqletot", [](ROOT::VecOps::RVec<Double_t> &CsI_L, Int_t stripNumber){return CsI_L[stripNumber];}, {"cal_CsI_L", "CsI_L_strip"})
 					.Define("sqretot", [](ROOT::VecOps::RVec<Double_t> &CsI_R, Int_t stripNumber){return CsI_R[stripNumber];}, {"cal_CsI_R", "CsI_R_strip"})
 
-					 .Define("sqletotp", [](Double_t sqlde, Double_t sq300){return siEloss1H.GetE0dE(sqlde+sq300, 1000.0);}, {"sqlde", "sq300"})
+					 //.Define("sqletotp", [](Double_t sqlde, Double_t sq300){return siEloss1H.GetE0dE(sqlde+sq300, 1000.0);}, {"sqlde", "sq300"})
 					 //.Define("sqletotd", [](Double_t sqlde, Double_t sq300){return siEloss3H.GetE0dE(sqlde+sq300, 1000.0);}, {"sqlde", "sq300"})
-					 .Define("sqletott", [](Double_t sqlde, Double_t sq300){return siEloss3H.GetE0dE(sqlde+sq300, 1000.0);}, {"sqlde", "sq300"})
-					 .Define("sqretot4", [](Double_t sqrde){return siEloss4He.GetE0dE(sqrde, 1000.0);}, {"sqrde"})
+					 //.Define("sqletott", [](Double_t sqlde, Double_t sq300){return siEloss3H.GetE0dE(sqlde+sq300, 1000.0);}, {"sqlde", "sq300"})
+					 //.Define("sqretot4", [](Double_t sqrde){return siEloss4He.GetE0dE(sqrde, 1000.0);}, {"sqrde"})
 					 //.Define("sqretot6", [](Double_t sqrde){return siEloss6He->GetE(sqrde, 1000.0);}, {"sqrde"})
 
 					 .Define("sqltime", [](ROOT::VecOps::RVec<unsigned short> &tSQX_L, Int_t stripNumber){return tSQX_L[stripNumber];}, {"tSQX_L", "SQX_L_strip"})
@@ -851,8 +858,15 @@ void analysis(TString inFileName)
 					 .Define("sqrang", [](TVector3 v6He, TVector3 vBeam){return v6He.Angle(vBeam)*TMath::RadToDeg();}, {"v6He", "vBeam"})
 					 .Define("he4", [](Double_t sqretot, Double_t sqrde){return GCutHe4->IsInside(sqretot,sqrde);}, {"sqretot","sqrde"})
 					 .Define("he6", [](Double_t sqretot, Double_t sqrde){return GCutHe6->IsInside(sqretot,sqrde);}, {"sqretot","sqrde"})
-					 .Define("dd", [](Double_t sqletot, Double_t sqlde){return GCut2H->IsInside(sqletot,sqlde);}, {"sqletot","sqlde"})
-					 .Define("tt", [](Double_t sqletot, Double_t sqlde){return GCut3H->IsInside(sqletot,sqlde);}, {"sqletot","sqlde"})
+					 .Define("dE2H", [](Double_t sqletot, Double_t sqlde){return GCutdE2H->IsInside(sqletot,sqlde);}, {"sqletot","sqlde"})
+					 .Define("dE3H", [](Double_t sqletot, Double_t sqlde){return GCutdE3H->IsInside(sqletot,sqlde);}, {"sqletot","sqlde"})
+					 .Define("angAngPP", [](Double_t sqrang, Double_t sqlang){return GCutangAngPP->IsInside(sqrang,sqlang);}, {"sqrang","sqlang"})
+					 .Define("angAngDD", [](Double_t sqrang, Double_t sqlang){return GCutangAngDD->IsInside(sqrang,sqlang);}, {"sqrang","sqlang"})
+					 .Define("angAngPT", [](Double_t sqrang, Double_t sqlang){return GCutangAngPT->IsInside(sqrang,sqlang);}, {"sqrang","sqlang"})
+					 .Define("langEPT", [](Double_t sqletot, Double_t sqlde, Double_t sq300, Double_t sqlang){return GCutlangEPT->IsInside(sqletot+sqlde+sq300,sqlang);}, {"sqletot","sqlde", "sq300", "sqlang"})
+					 .Define("rangEPT", [](Double_t sqretot, Double_t sqrde, Double_t sqrang){return GCutrangEPT->IsInside(sqrde+sqretot,sqrang);}, {"sqretot","sqrde","sqrang"})
+					 .Define("langEPP", [](Double_t sqletot, Double_t sqlde, Double_t sq300, Double_t sqlang){return GCutlangEPP->IsInside(sqletot+sqlde+sq300,sqlang);}, {"sqletot","sqlde", "sq300", "sqlang"})
+					 .Define("langEDD", [](Double_t sqletot, Double_t sqlde, Double_t sq300, Double_t sqlang){return GCutlangEDD->IsInside(sqletot+sqlde+sq300,sqlang);}, {"sqletot","sqlde", "sq300", "sqlang"})
 					 .Define("thetaCM", "rnd->Uniform(0.0,TMath::Pi())")
 					 .Define("sqlangpp", getPPLang, {"thetaCM","lvBeam"})
 					 .Define("sqrangpp", getPPRang, {"thetaCM","lvBeam"})
@@ -868,18 +882,14 @@ void analysis(TString inFileName)
 					 .Define("sqrangpt_75", [qPT_75](Double_t thetaCM, TLorentzVector lvBeam){return getPTRang(thetaCM, lvBeam, qPT_75);}, {"thetaCM","lvBeam"})
 					 .Define("sqlangpt_0", [qPT_0](Double_t thetaCM, TLorentzVector lvBeam){return getPTLang(thetaCM, lvBeam, qPT_0);}, {"thetaCM","lvBeam"})
 					 .Define("sqrangpt_0", [qPT_0](Double_t thetaCM, TLorentzVector lvBeam){return getPTRang(thetaCM, lvBeam, qPT_0);}, {"thetaCM","lvBeam"});
+					 
+	auto dataFramePP = outDF.Filter("he6 && angAngPP && langEPP");
+	auto dataFrameDD = outDF.Filter("he6 && angAngDD && langEDD");
+	auto dataFramePT = outDF.Filter("he4 && dE3H && angAngPT && langEPT && rangEPT");
 
-
-	//inDF.Define("vBeamLength", getBeamVector, {"vBeam"});
-	//Define("fs_mc_weight", [] (double luminosity, andallotherargs...) { return lumiWeight(sampleTag, luminosity, genWeight, eventWeight, leptonWeight, jvtWeight, bTagWeight, pileupWeight, FFWeight), {"luminosity", "andallothercolumns"})
-/*
-
-	AELC *h2_Si = new ELC(2, 1, si_Nel, 2.35, si_A, si_Z, si_W, 100.,1500);
-	std::cout<<"Energy "<<h2_Si->GetE(10.0, -3.5)<<std::endl;
-*/
-
-
-
+dataFramePP.Snapshot("pt", "/home/zalewski/dataTmp/small/pt.root");
+dataFramePP.Snapshot("pp", "/home/zalewski/dataTmp/small/pp.root");
+dataFramePP.Snapshot("dd", "/home/zalewski/dataTmp/small/dd.root");
 outDF.Snapshot("analyzed", outFilename.Data());
 }
 
@@ -915,7 +925,7 @@ void ui()
 			//translator(inputFilePath);
 			//cleaner(inputFilePath);
 			//calibratorCaller(inputFilePath);
-			//analysis(inputFilePath);
+			analysis(inputFilePath);
 		}
 	}
 	stopwatch->Print();
