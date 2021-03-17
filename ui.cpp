@@ -97,8 +97,12 @@ Double_t getPTRang(Double_t m_thetaCM, TLorentzVector m_lvBeam, Double_t m_Q)
 	return m_lv4He.Angle(m_lvBeam.Vect())*TMath::RadToDeg();
 }
 
-Double_t altPTLang(Double_t m_thetaCM, TLorentzVector m_lvBeam, Double_t m_Q)
+Double_t recoPT(Double_t m_sqlang, TLorentzVector m_lvBeam)
 {
+	//generate pt reaction (lv3H actually) with:
+	//			theta in range 0:3.14
+	//			beam vector
+	//			q of the reaction
 	Int_t multi = (rnd->Integer(2)==1) ? 1 : -1;
 	TLorentzVector m_lv6He(m_lvBeam);
 	// /m_lv6He.SetTheta(0.0);
@@ -109,7 +113,7 @@ Double_t altPTLang(Double_t m_thetaCM, TLorentzVector m_lvBeam, Double_t m_Q)
 	m_lv6He.Boost(-m_boostVect);
 
 	Double_t m_Ecm = m_lv1H.E() + m_lv6He.E();
-	Double_t m_finTcm = m_Ecm - (cs::mass6He + cs::mass1H) + m_Q;
+	Double_t m_finTcm = m_Ecm - (cs::mass6He + cs::mass1H) + cs::Qpt;
 
 	Double_t m_cm3HkinE = m_finTcm*(m_finTcm+2*cs::mass4He)/(2.0*m_Ecm);
 	Double_t m_cm3Hene = m_cm3HkinE + cs::mass3H;
@@ -126,9 +130,12 @@ Double_t altPTLang(Double_t m_thetaCM, TLorentzVector m_lvBeam, Double_t m_Q)
 	Double_t m_gammaCM = m_lvCM.Gamma();
 	Double_t m_beta3HCM = m_lv3H.Beta();
 	Double_t m_beta4HeCM = m_lv4He.Beta();
-	m_lv3H.SetTheta(m_thetaCM);
-	m_lv3H.Boost(m_boostVect);
+	//m_lv3H.SetTheta(m_thetaCM);
+	//m_lv3H.Boost(m_boostVect);
 
+	//reconstruct pt reaction (angle) knowing:
+	//			beta and gamma of the CM, beta of 3H in CM, beta of 4He in CM
+	//			angle between 3H and beam vectors
 	Double_t m_betaCM3H = (sqrt(m_cm3HkinE*m_cm3HkinE+2*m_cm3HkinE*cs::mass3H))/(m_cm3HkinE+cs::mass3H);
 	Double_t m_betaCM4He = (sqrt(m_cm4HekinE*m_cm4HekinE+2*m_cm4HekinE*cs::mass4He))/(m_cm4HekinE+cs::mass4He);
 	Double_t m_beta3HRatio = m_betaCM/m_betaCM3H;
@@ -136,10 +143,13 @@ Double_t altPTLang(Double_t m_thetaCM, TLorentzVector m_lvBeam, Double_t m_Q)
 	Double_t m_beta3HRatio2 = m_beta3HRatio*m_beta3HRatio;
 
 	//calculating CM angles
-	Double_t m_gammaTan2 = std::pow(m_gammaCM*tan(m_lv3H.Angle(m_lvBeam.Vect())),2);
+	Double_t m_gammaTan2 = std::pow(m_gammaCM*tan(m_sqlang*TMath::DegToRad()),2);
 	Double_t m_cosThetaCM3H = (-m_beta3HRatio*m_gammaTan2+multi*sqrt(1.0+m_gammaTan2*(1.0-m_beta3HRatio2)))/(1.0+m_gammaTan2);
-	Double_t m_ThetaCM3H = acos(m_cosThetaCM3H);
-	return m_ThetaCM3H;
+	Double_t m_thetaCM3H = acos(m_cosThetaCM3H);
+	Double_t m_thetaCM4He = TMath::Pi() - m_thetaCM3H;
+	Double_t m_4He_lab = atan(sin(m_thetaCM4He)/(m_gammaCM*(cos(m_thetaCM4He)+m_betaCM/m_betaCM4He)));
+	Double_t m_3H_lab = atan(sin(m_thetaCM3H)/(m_gammaCM*(cos(m_thetaCM3H)+m_betaCM/m_betaCM3H)));
+	return m_4He_lab*TMath::RadToDeg();
 }
 
 //p,p reaction
@@ -837,7 +847,7 @@ void analysis(TString inFileName)
 					 .Define("sqlde", [](ROOT::VecOps::RVec<Double_t> &SQX_L, Int_t stripNumber){return SQX_L[stripNumber];}, {"cal_SQX_L", "SQX_L_strip"})
 					 .Define("sqrde", [](ROOT::VecOps::RVec<Double_t> &SQX_R, Int_t stripNumber){return SQX_R[stripNumber];}, {"cal_SQX_R", "SQX_R_strip"})
 					 .Define("sqletot", [](ROOT::VecOps::RVec<Double_t> &CsI_L, Int_t stripNumber){return CsI_L[stripNumber];}, {"cal_CsI_L", "CsI_L_strip"})
-					.Define("sqretot", [](ROOT::VecOps::RVec<Double_t> &CsI_R, Int_t stripNumber){return CsI_R[stripNumber];}, {"cal_CsI_R", "CsI_R_strip"})
+					 .Define("sqretot", [](ROOT::VecOps::RVec<Double_t> &CsI_R, Int_t stripNumber){return CsI_R[stripNumber];}, {"cal_CsI_R", "CsI_R_strip"})
 
 					 //.Define("sqletotp", [](Double_t sqlde, Double_t sq300){return siEloss1H.GetE0dE(sqlde+sq300, 1000.0);}, {"sqlde", "sq300"})
 					 //.Define("sqletotd", [](Double_t sqlde, Double_t sq300){return siEloss3H.GetE0dE(sqlde+sq300, 1000.0);}, {"sqlde", "sq300"})
@@ -867,11 +877,15 @@ void analysis(TString inFileName)
 					 .Define("rangEPT", [](Double_t sqretot, Double_t sqrde, Double_t sqrang){return GCutrangEPT->IsInside(sqrde+sqretot,sqrang);}, {"sqretot","sqrde","sqrang"})
 					 .Define("langEPP", [](Double_t sqletot, Double_t sqlde, Double_t sq300, Double_t sqlang){return GCutlangEPP->IsInside(sqletot+sqlde+sq300,sqlang);}, {"sqletot","sqlde", "sq300", "sqlang"})
 					 .Define("langEDD", [](Double_t sqletot, Double_t sqlde, Double_t sq300, Double_t sqlang){return GCutlangEDD->IsInside(sqletot+sqlde+sq300,sqlang);}, {"sqletot","sqlde", "sq300", "sqlang"})
+					 .Define("pp", "he6 && angAngPP && langEPP")
+					 .Define("dd", "he6 && angAngDD && langEDD")
+					 .Define("pt", "he4 && dE3H && angAngPT && langEPT && rangEPT")
 					 .Define("thetaCM", "rnd->Uniform(0.0,TMath::Pi())")
 					 .Define("sqlangpp", getPPLang, {"thetaCM","lvBeam"})
 					 .Define("sqrangpp", getPPRang, {"thetaCM","lvBeam"})
 					 .Define("sqlangdd", getDDLang, {"thetaCM","lvBeam"})
 					 .Define("sqrangdd", getDDRang, {"thetaCM","lvBeam"})
+					 .Define("myCol", recoPT, {"sqlang","lvBeam"})
 
 					 .Define("sqlangdt_45", [qDT_45](Double_t thetaCM, TLorentzVector lvBeam){return getDTLang(thetaCM, lvBeam, qDT_45);}, {"thetaCM","lvBeam"})
 					 .Define("sqrangdt_45", [qDT_45](Double_t thetaCM, TLorentzVector lvBeam){return getDTRang(thetaCM, lvBeam, qDT_45);}, {"thetaCM","lvBeam"})
@@ -882,15 +896,16 @@ void analysis(TString inFileName)
 					 .Define("sqrangpt_75", [qPT_75](Double_t thetaCM, TLorentzVector lvBeam){return getPTRang(thetaCM, lvBeam, qPT_75);}, {"thetaCM","lvBeam"})
 					 .Define("sqlangpt_0", [qPT_0](Double_t thetaCM, TLorentzVector lvBeam){return getPTLang(thetaCM, lvBeam, qPT_0);}, {"thetaCM","lvBeam"})
 					 .Define("sqrangpt_0", [qPT_0](Double_t thetaCM, TLorentzVector lvBeam){return getPTRang(thetaCM, lvBeam, qPT_0);}, {"thetaCM","lvBeam"});
-					 
-	auto dataFramePP = outDF.Filter("he6 && angAngPP && langEPP");
-	auto dataFrameDD = outDF.Filter("he6 && angAngDD && langEDD");
-	auto dataFramePT = outDF.Filter("he4 && dE3H && angAngPT && langEPT && rangEPT");
 
-dataFramePP.Snapshot("pt", "/home/zalewski/dataTmp/small/pt.root");
-dataFramePP.Snapshot("pp", "/home/zalewski/dataTmp/small/pp.root");
-dataFramePP.Snapshot("dd", "/home/zalewski/dataTmp/small/dd.root");
-outDF.Snapshot("analyzed", outFilename.Data());
+	auto smallDF = outDF.Filter("pp || dd || pt");
+	auto c = smallDF.Count();
+	Int_t customClusterSize = *c / numberOfThreads;
+	ROOT::RDF::RSnapshotOptions myOpts;
+	myOpts.fAutoFlush=customClusterSize;
+
+	smallDF.Snapshot("small", "/home/zalewski/dataTmp/small/small" + std::to_string(cs::runNo) + ".root", columnList, myOpts);
+
+	outDF.Snapshot("analyzed", outFilename.Data());
 }
 
 void ui()

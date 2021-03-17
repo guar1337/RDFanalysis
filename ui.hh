@@ -34,6 +34,20 @@
 												  "tdcMWPC",
 												  "SQ300"};
 
+	std::vector<std::string> columnList{"SQX_L_strip",
+										"SQX_R_strip",
+										"SQY_L_strip",
+										"SQY_R_strip",
+										"geo",
+										"MWPC_1_X",
+										"MWPC_2_X",
+										"MWPC_1_Y",
+										"MWPC_2_Y",
+										"kinE",
+										"pp",
+										"dd",
+										"pt"};
+
 	std::vector< std::vector< float > > vecAcoef;
 	std::vector< std::vector< float > > vecBcoef;
 	std::vector< float > Acoef;
