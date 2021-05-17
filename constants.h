@@ -63,9 +63,9 @@ namespace cs
 	static const float	tarPos = 0.0;
 	static const float	tarAngle = 0.0;
 */
-	static const float	MWPC1_X_displacement = -1.0;
+	static const float	MWPC1_X_displacement = 0.0;
 	static const float	MWPC1_Y_displacement = 0.0;
-	static const float	MWPC2_X_displacement = -2.1375;
+	static const float	MWPC2_X_displacement = 0.0;
 	static const float	MWPC2_Y_displacement = 0.0;
 
 	static const float	leftDetShift = 0.0;
@@ -128,9 +128,10 @@ namespace cs
 	static const TString 	s_inFname("run00_12");
 	static const TString	dir_gcut("/home/zalewski/aku/wrk/GCuts/");
 
-	static const int		runNo = 3;
+	static const int		runNo = 10;
+	static const int		fileToProcess = 0;
 	static const TString	inDir = "raw";
-	static const bool 		fixedMWPC = false;
+	static const bool 	fixedMWPC = false;
 	static const int		tarMass = 1;
 }
 #endif

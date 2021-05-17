@@ -4,6 +4,22 @@ R__LOAD_LIBRARY(libgsl.so);
 R__LOAD_LIBRARY(/home/zalewski/aku/ELC/build/libEloss.so);
 R__LOAD_LIBRARY(/home/zalewski/aku/TELoss/libTELoss.so);
 
+void makeSmallFile()
+{
+	TChain smallChain("small");
+	smallChain.Add("/home/zalewski/dataTmp/small/small1.root");
+	smallChain.Add("/home/zalewski/dataTmp/small/small2.root");
+	smallChain.Add("/home/zalewski/dataTmp/small/small3.root");
+
+	ROOT::RDataFrame smallDF(smallChain);
+	auto c = smallDF.Count();
+	Int_t customClusterSize = *c / numberOfThreads;
+	ROOT::RDF::RSnapshotOptions myOpts;
+	myOpts.fAutoFlush=customClusterSize;
+
+	smallDF.Snapshot("small", "/home/zalewski/dataTmp/small/small.root", columnList, myOpts);
+}
+
 //d,t reaction
 Double_t getDTLang(Double_t m_thetaCM, TLorentzVector m_lvBeam, Double_t m_Q)
 {
@@ -243,8 +259,8 @@ Int_t getStripNumber(ROOT::VecOps::RVec<Double_t> &inputArray)
 
 TVector3 getLeftDetVertex(Int_t m_xStrip, Int_t m_yStrip)
 {
-	m_xStrip+=rnd->Uniform(0.0,1.0)-0.5;
-	m_yStrip+=rnd->Uniform(0.0,1.0)-0.5;
+	Double_t xStrip = m_xStrip + (rnd->Uniform(0.0,1.0)-0.5);
+	Double_t yStrip = m_yStrip + (rnd->Uniform(0.0,1.0)-0.5);
 
 	// coordinates of hit in LAB system	
 	Double_t X2hDet = -cs::widthStripX * m_xStrip * cos(sqlAng);
@@ -255,8 +271,8 @@ TVector3 getLeftDetVertex(Int_t m_xStrip, Int_t m_yStrip)
 
 TVector3 getRightDetVertex(Int_t m_xStrip, Int_t m_yStrip)
 {
-	m_xStrip+=rnd->Uniform(0.0,1.0)-0.5;
-	m_yStrip+=rnd->Uniform(0.0,1.0)-0.5;
+	Double_t xStrip = m_xStrip + (rnd->Uniform(0.0,1.0)-0.5);
+	Double_t yStrip = m_yStrip + (rnd->Uniform(0.0,1.0)-0.5);
 
 	// coordinates of hit in LAB system
 	Double_t X6HeDet = cs::widthStripX * m_xStrip * cos(sqrAng);
@@ -267,11 +283,11 @@ TVector3 getRightDetVertex(Int_t m_xStrip, Int_t m_yStrip)
 
 TVector3 getBeamVector(Double_t m_MWPC_1_X, Double_t m_MWPC_1_Y, Double_t m_MWPC_2_X, Double_t m_MWPC_2_Y, Double_t m_kinE)
 {
-	Double_t m_fMWPC_1_X = m_MWPC_1_X + cs::MWPC1_X_displacement;
-	Double_t m_fMWPC_1_Y = m_MWPC_1_Y + cs::MWPC1_Y_displacement;
+	Double_t m_fMWPC_1_X = m_MWPC_1_X + parameters[sMWPC_1_X];
+	Double_t m_fMWPC_1_Y = m_MWPC_1_Y + parameters[sMWPC_1_Y];
 	Double_t m_fMWPC_1_Z = -816.0;
-	Double_t m_fMWPC_2_X = m_MWPC_2_X + cs::MWPC2_X_displacement;
-	Double_t m_fMWPC_2_Y = m_MWPC_2_Y + cs::MWPC2_Y_displacement;
+	Double_t m_fMWPC_2_X = m_MWPC_2_X + parameters[sMWPC_2_X];
+	Double_t m_fMWPC_2_Y = m_MWPC_2_Y + parameters[sMWPC_2_Y];
 	Double_t m_fMWPC_2_Z = -270.0;
 
 	TVector3 m_beamVector(m_fMWPC_2_X - m_fMWPC_1_X, m_fMWPC_2_Y - m_fMWPC_1_Y, m_fMWPC_2_Z - m_fMWPC_1_Z);
@@ -283,12 +299,13 @@ TVector3 getBeamVector(Double_t m_MWPC_1_X, Double_t m_MWPC_1_Y, Double_t m_MWPC
 
 TVector3 getTarVertex(Double_t m_MWPC_1_X, Double_t m_MWPC_1_Y, Double_t m_MWPC_2_X, Double_t m_MWPC_2_Y)
 {
-	Double_t m_fMWPC_1_X = m_MWPC_1_X + cs::MWPC1_X_displacement;
-	Double_t m_fMWPC_1_Y = m_MWPC_1_Y + cs::MWPC1_Y_displacement;
+	Double_t m_fMWPC_1_X = m_MWPC_1_X + parameters[sMWPC_1_X];
+	Double_t m_fMWPC_1_Y = m_MWPC_1_Y + parameters[sMWPC_1_Y];
 	Double_t m_fMWPC_1_Z = -816.0;
-	Double_t m_fMWPC_2_X = m_MWPC_2_X + cs::MWPC2_X_displacement;
-	Double_t m_fMWPC_2_Y = m_MWPC_2_Y + cs::MWPC2_Y_displacement;
+	Double_t m_fMWPC_2_X = m_MWPC_2_X + parameters[sMWPC_2_X];
+	Double_t m_fMWPC_2_Y = m_MWPC_2_Y + parameters[sMWPC_2_Y];
 	Double_t m_fMWPC_2_Z = -270.0;
+
 	Double_t m_dX = m_fMWPC_2_X - m_fMWPC_1_X;
 	Double_t m_dY = m_fMWPC_2_Y - m_fMWPC_1_Y;
 	Double_t m_dZ = m_fMWPC_2_Z - m_fMWPC_1_Z;
@@ -544,7 +561,32 @@ bool filterSQ(ROOT::VecOps::RVec<unsigned short> &SQ, Double_t threshold)
 	return sqFlag;
 }
 
-void loadParameters()
+void loadCorrectionParameters()
+{
+	std::string line;
+	std::string fName = "/home/zalewski/Desktop/6He/analysis/experimental/good/pics/db";
+
+	std::ifstream outStreamGenerated(fName, std::ios::in);
+	if (!outStreamGenerated)
+	{
+		printf("Failed to open file: %s\n", fName.c_str());
+	}
+
+	int jumpTo = cs::fileToProcess + (int)'a';
+	std::getline(outStreamGenerated, line, (char)jumpTo);
+	printf("%s\n", line.c_str());
+
+	float tmpContainer;
+	for (int iii = 0; iii < 11; iii++)
+	{
+		outStreamGenerated>>tmpContainer;
+		parameters.push_back(tmpContainer);
+		printf("%s = %f\n", parNames[iii].c_str(), parameters[iii]);
+	}
+
+}
+
+void loadCalibrationParameters()
 {
 	TString fileName;
 	std::string dummy;
@@ -659,7 +701,8 @@ ROOT::RDF::RNode ApplyDefines(	ROOT::RDF::RNode df,
 				 .Define("MWPC_1_X", getMWPCpos(0),{"x1","nx1"})
 				 .Define("MWPC_1_Y", getMWPCpos(1),{"y1","ny1"})
 				 .Define("MWPC_2_X", getMWPCpos(2),{"x2","nx2"})
-				 .Define("MWPC_2_Y", getMWPCpos(3),{"y2","ny2"});
+				 .Define("MWPC_2_Y", getMWPCpos(3),{"y2","ny2"})
+				 .Define("geo", "cs::runNo");
 	}
 
 	std::string inputColumn = colNames[iii];
@@ -701,8 +744,9 @@ void translator(TString inFileName)
 void analysis(TString inFileName)
 {
 	inFileName.ReplaceAll("raw","cal");
-	ROOT::RDataFrame inDF("calibrated", inFileName.Data());
-	TString outFilename = inFileName.ReplaceAll("cal","dE");
+	TString treeName = "calibrated";
+	ROOT::RDataFrame inDF(treeName.Data(), inFileName.Data());
+	TString outFilename = inFileName.ReplaceAll("cal","dE").ReplaceAll("mc","mc_out");
 	std::cout<<"Analysing "<<inFileName<<std::endl;
 
 	//load Graphical cuts
@@ -718,6 +762,7 @@ void analysis(TString inFileName)
 	GCutrangEPT = (TCutG*)cutgFile.Get("rangEPT");
 	GCutlangEPP = (TCutG*)cutgFile.Get("langEPP");
 	GCutlangEDD = (TCutG*)cutgFile.Get("langEDD");
+	GCutpartPT = (TCutG*)cutgFile.Get("partPT");
 
 	AELC *h1_Si = new ELC(1, 1, si_Nel, 2.35, si_A, si_Z, si_W, 500.,1500);
 	AELC *h2_Si = new ELC(2, 1, si_Nel, 2.35, si_A, si_Z, si_W, 500.,1500);
@@ -763,7 +808,8 @@ void analysis(TString inFileName)
 	Double_t qPT_0 = 0.0;
 
 	//load geometrical parameters
-	switch (cs::runNo)
+	int geometryID = (cs::runNo>=10) ? cs::runNo/10 : cs::runNo;
+	switch (geometryID)
 	{
 		case 0:
 		{
@@ -776,66 +822,71 @@ void analysis(TString inFileName)
 
 		case 1:
 		{
-			tarPos = 0.0;
+			tarPos = parameters[sTarPos1];
 			tarThickness = 80.0 + cs::tarThicknessShift;
-			tarAngle = 45.0 * TMath::DegToRad();
+			tarAngle = 45.0* TMath::DegToRad();
 
-			sqlAng = (65.0 + 0.0) * TMath::DegToRad();
+			sqlAng = (65.0 + parameters[sLang1]) * TMath::DegToRad();
 			sqlDist = 170.0;
 			
-			sqrAng = (15.0 + 0.0) * TMath::DegToRad();
+			sqrAng = (15.0 + parameters[sRang]) * TMath::DegToRad();
 			sqrDist = 250.0;
 			break;
 		}
 
 		case 2:
 		{
-			tarPos = 0.0 + 2.0;
+			tarPos = parameters[sTarPos2];
 			tarThickness = 160 + 2*cs::tarThicknessShift;
 			tarAngle = 6.0 * TMath::DegToRad();
 
-			sqlAng = (50.0 + 0.0) * TMath::DegToRad();
+			sqlAng = (50.0 + parameters[sLang1]) * TMath::DegToRad();
 			sqlDist = 170.0;
 
-			sqrAng = (15.0 + 0.0) * TMath::DegToRad();
+			sqrAng = (15.0 + parameters[sRang]) * TMath::DegToRad();
 			sqrDist = 250.0;
 			break;
 		}
 
 		case 3:
 		{
-			tarPos = 0.0 + 2.0;
+			tarPos = parameters[sTarPos3];
 			tarThickness = 160 + 2*cs::tarThicknessShift;
 			tarAngle = 0.0 * TMath::DegToRad();
 
-			sqlAng = (35.0 + 0.0) * TMath::DegToRad();
+			sqlAng = (35.0 + parameters[sLang3]) * TMath::DegToRad();
 			sqlDist = 170.0;
 
-			sqrAng = (15.0 + 0.0) * TMath::DegToRad();
+			sqrAng = (15.0 + parameters[sRang]) * TMath::DegToRad();
 			sqrDist = 250.0;
 			break;
 		}
 	}
 
-	Double_t X2Hlab = sqlDist*sin(sqlAng) + (cs::sqlXzero + cs::leftDetShift) * cos(sqlAng);
+	Double_t X2Hlab = sqlDist*sin(sqlAng) + (cs::sqlXzero) * cos(sqlAng);
 	Double_t Y2Hlab = cs::sqlYstart + cs::widthStripY;
-	Double_t Z2Hlab = sqlDist*cos(sqlAng) - (cs::sqlXzero + cs::leftDetShift) * sin(sqlAng);
+	Double_t Z2Hlab = sqlDist*cos(sqlAng) - (cs::sqlXzero) * sin(sqlAng);
 	TVector3 leftDetPosition(X2Hlab, Y2Hlab, Z2Hlab);
 
-	Double_t X6Helab = sqrDist*sin(-sqrAng) - (cs::sqrXzero + cs::rightDetShift) * cos(sqrAng);
-	Double_t Y6Helab = cs::sqrYstart + cs::widthStripY;
-	Double_t Z6Helab = sqrDist*cos(sqrAng) - (cs::sqrXzero + cs::rightDetShift) * sin(sqrAng);
+	Double_t X6Helab = sqrDist*sin(-sqrAng) - (cs::sqrXzero) * cos(sqrAng);
+	Double_t Y6Helab = cs::sqrYstart;
+	Double_t Z6Helab = sqrDist*cos(sqrAng) - (cs::sqrXzero) * sin(sqrAng);
 	TVector3 rightDetPosition(X6Helab, Y6Helab, Z6Helab);
+
+	printf("Working with leftDetPosition: X = %f, Y=%f, Z=%f\tand with rightDetPosition: X = %f, Y=%f, Z=%f\n", 
+	leftDetPosition.X(), leftDetPosition.Y(), leftDetPosition.Z(), rightDetPosition.X(), rightDetPosition.Y(), rightDetPosition.Z());
+
+	for(std::string myElement : parNames)
+
 
 	inDF.Filter(filterLeftDetector, {"cal_SQX_L"})
 		.Filter(filterLeftDetector, {"cal_SQY_L"})
 		.Filter(filterRightDetector, {"cal_SQX_R"})
 		.Filter(filterRightDetector, {"cal_SQY_R"});
-	auto outDF = inDF.Define("kinE", [](Double_t ToF){return getKineticEnergy(ToF);},{"tof"})
+	auto outDF = inDF.Define("kinE", getKineticEnergy, {"tof"})
 					 .Define("vBeam", getBeamVector, {"MWPC_1_X", "MWPC_1_Y", "MWPC_2_X", "MWPC_2_Y", "kinE"})
 					 .Define("lvBeam", [](TVector3 vBeam, Double_t kinE){return TLorentzVector(vBeam,cs::mass6He+kinE);}, {"vBeam", "kinE"})
 					 .Define("tarVertex", getTarVertex, {"MWPC_1_X", "MWPC_1_Y", "MWPC_2_X", "MWPC_2_Y"})
-					 .Define("geo", "cs::runNo")
 					 .Define("SQ300_strip", getStripNumber, {"cal_SQ300"})
 					 .Define("SQX_L_strip", getStripNumber, {"cal_SQX_L"})
 					 .Define("SQY_L_strip", getStripNumber, {"cal_SQY_L"})
@@ -880,6 +931,7 @@ void analysis(TString inFileName)
 					 .Define("pp", "he6 && angAngPP && langEPP")
 					 .Define("dd", "he6 && angAngDD && langEDD")
 					 .Define("pt", "he4 && dE3H && angAngPT && langEPT && rangEPT")
+					 .Define("partPT", [](Double_t sqrang, Double_t sqlang){return GCutpartPT->IsInside(sqrang,sqlang);}, {"sqrang","sqlang"})
 					 .Define("thetaCM", "rnd->Uniform(0.0,TMath::Pi())")
 					 .Define("sqlangpp", getPPLang, {"thetaCM","lvBeam"})
 					 .Define("sqrangpp", getPPRang, {"thetaCM","lvBeam"})
@@ -918,29 +970,53 @@ void ui()
 	selector = TSelector::GetSelector("/home/zalewski/aku/analysis/simplifier123.C");
 	std::cout<<"..."<<std::endl<<".."<<std::endl<<"."<<std::endl;
 
+
 	if (cs::runNo==5)
 	{
 		selector = TSelector::GetSelector("/home/zalewski/aku/analysis/simplifier5.C");
 	}
 
-	loadParameters();
-	TString str_name;
-	TSystemDirectory *dir_data = new TSystemDirectory("data",raw_data_path.Data());
+	loadCalibrationParameters();
+	loadCorrectionParameters();
+	TString str_name, sourceDir;
+
+	if (cs::runNo==1 || cs::runNo==2 || cs::runNo==3)
+	{
+		sourceDir = "/home/zalewski/dataTmp/raw/geo" + std::to_string(cs::runNo) + "/";
+	}
+
+	else if (cs::runNo==10 || cs::runNo==20 || cs::runNo==30)
+	{
+		TString mcFilesPath = "/home/zalewski/dataTmp/MC/geo";
+		TString mcGeoNumber = std::to_string(cs::runNo/10);
+		sourceDir = mcFilesPath.Data() + mcGeoNumber + "/";
+	}
+
+	else
+	{
+		printf("Wrong geometry (geo = %d)\tExiting now.\n", cs::runNo);
+		return 0;
+	}
+
+	TSystemDirectory *dir_data = new TSystemDirectory("data",sourceDir.Data());
+
+	
 	TIter bluster = dir_data->GetListOfFiles();
 	while (TObject *obj = bluster())
 	{
 		str_name = obj->GetName();
-		//std::cout<<str_name<<std::endl;
-		if (str_name.Contains("raw_geo") &&  //if we want to ommit some phrase (np.li9_3_21_0)
-			!str_name.Contains("li9") //  "!"  sign is important
-								)
+		std::cout<<str_name<<std::endl;
+		TString fID = "v" + std::to_string(cs::fileToProcess);
+		if ((str_name.Contains("raw_geo") && !str_name.Contains("li9")) ||
+		(str_name.Contains("mc") && !str_name.Contains("out") && str_name.Contains(fID.Data())))
 		{
-			TString inputFilePath = raw_data_path + str_name;
+			TString inputFilePath = sourceDir + str_name;
 			//printf("fName:\t%s\n",inputFilePath.Data());
 			//translator(inputFilePath);
 			//cleaner(inputFilePath);
 			//calibratorCaller(inputFilePath);
 			analysis(inputFilePath);
+			//makeSmallFile();
 		}
 	}
 	stopwatch->Print();

@@ -5,6 +5,7 @@
 #include "TLorentzVector.h"
 #include "TSelector.h"
 #include "TCutG.h"
+#include "TChain.h"
 #include "TRandom3.h"
 #include "TVector3.h"
 #include "ROOT/RDataFrame.hxx"
@@ -46,7 +47,12 @@
 										"kinE",
 										"pp",
 										"dd",
-										"pt"};
+										"pt",
+										"partPT"};
+
+	enum sPar {sMWPC_1_X, sMWPC_1_Y, sMWPC_2_X, sMWPC_2_Y, sTarPos1, sTarPos2, sTarPos3, sLang1, sLang2, sLang3, sRang};
+	std::vector<std::string> parNames = {"sMWPC_1_X", "sMWPC_1_Y", "sMWPC_2_X", "sMWPC_2_Y", "sTarPos1", "sTarPos2", "sTarPos3", "sLang1", "sLang2", "sLang3", "sRang"};
+	std::vector<Double_t> parameters;
 
 	std::vector< std::vector< float > > vecAcoef;
 	std::vector< std::vector< float > > vecBcoef;
@@ -61,7 +67,8 @@
 	TRandom3 *rnd;
 	const TLorentzVector lvTar1H(0.0, 0.0, 0.0, cs::mass1H);
 	const TLorentzVector lvTar2H(0.0, 0.0, 0.0, cs::mass2H);
-	TCutG *GCutHe4, *GCutHe6, *GCutdE2H, *GCutdE3H, *GCutangAngPT, *GCutlangEPT, *GCutrangEPT, *GCutangAngPP, *GCutangAngDD, *GCutlangEPP, *GCutlangEDD;
+	TCutG *GCutHe4, *GCutHe6, *GCutdE2H, *GCutdE3H, *GCutangAngPT;
+	TCutG *GCutpartPT, *GCutlangEPT, *GCutrangEPT, *GCutangAngPP, *GCutangAngDD, *GCutlangEPP, *GCutlangEDD;
 	TELoss siEloss1H, siEloss2H, siEloss3H, siEloss4He, siEloss6He;
 	
 	//TVector3

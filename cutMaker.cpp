@@ -1,4 +1,4 @@
-int tcutg()
+int cutMaker()
 {
 
    TCutG *angEPP = new TCutG("langEPP",18);
@@ -288,6 +288,18 @@ int tcutg()
    angAngPP->SetPoint(17,3.57662,71.694);
    angAngPP->SetPoint(18,3.16898,74.7541);
    angAngPP->SetPoint(19,3.62192,75.5191);
+
+   TCutG *partPT = new TCutG("partPT",6);
+   partPT->SetVarX("sqrang");
+   partPT->SetVarY("sqlang");
+   partPT->SetTitle("Graph");
+   partPT->SetFillStyle(1000);
+   partPT->SetPoint(0,22.0364,30.2999);
+   partPT->SetPoint(1,18.791,29.2083);
+   partPT->SetPoint(2,21.1111,20.5225);
+   partPT->SetPoint(3,24.0526,20.987);
+   partPT->SetPoint(4,22.8235,30.0676);
+   partPT->SetPoint(5,22.0364,30.2999);
   
 
    rangEPT->Write();
@@ -301,6 +313,7 @@ int tcutg()
    angAngDD->Write();
    angEPP->Write();
    angEDD->Write();
+	partPT->Write();
    
    gcuts.Write();
    gcuts.Close();
