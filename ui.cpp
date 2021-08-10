@@ -2,7 +2,7 @@
 
 R__LOAD_LIBRARY(libgsl.so);
 R__LOAD_LIBRARY(/home/zalewski/aku/ELC/build/libEloss.so);
-R__LOAD_LIBRARY(/home/zalewski/aku/TELoss/libTELoss.so);
+//R__LOAD_LIBRARY(/home/zalewski/aku/TELoss/libTELoss.so);
 
 void makeSmallFile()
 {
@@ -18,6 +18,26 @@ void makeSmallFile()
 	myOpts.fAutoFlush=customClusterSize;
 
 	smallDF.Snapshot("small", "/home/zalewski/dataTmp/small/small.root", columnList, myOpts);
+}
+
+void makeOutputFiles()
+{
+	//loop over file with parameters and choose set of parameters
+
+	//loop on geometry
+
+	//run modifiedAnalysis(int geoNo, int setNo)
+
+	//For simplicity use small.root:
+		//cut on pp
+		//cut on dd
+	//output:
+		//CM_1H
+		//CM_2H
+		//tarVertex
+		//sqlang and sqrang
+
+
 }
 
 //d,t reaction
@@ -250,6 +270,34 @@ Double_t getDDLang(Double_t m_thetaCM, TLorentzVector m_lvBeam)
 	Double_t m_sqlangdd = 180.0 * (m_lvBeam.Angle(m_lv2H.Vect()))/double(TMath::Pi());
 	//Double_t m_sqrangdd = 180.0 * (m_lvBeam.Angle(m_lv6He.Vect()))/double(TMath::Pi());
 	return m_sqlangdd;
+}
+
+Double_t getMCAngle1H(Double_t m_LAng, TLorentzVector m_lvBeam)
+{
+	TLorentzVector m_lvTar(0.0, 0.0, 0.0, cs::mass1H);
+	TLorentzVector m_lvCM = m_lvTar + m_lvBeam;
+	TVector3 m_vBoost = m_lvCM.BoostVector();
+
+	Double_t m_ThetaCM2H = m_lvCM.Theta();
+	Double_t m_gammaSquare2H = m_lvCM.Gamma()*m_lvCM.Gamma();
+	Double_t m_tanSquare = tan(m_LAng*TMath::DegToRad()) * tan(m_LAng*TMath::DegToRad());
+	Double_t m_cosLeftAng = (1.0 - m_gammaSquare2H*m_tanSquare)/(1 + m_gammaSquare2H*m_tanSquare);
+	Double_t m_sqlangCM = (acos(m_cosLeftAng)-m_ThetaCM2H)*TMath::RadToDeg();
+	return m_sqlangCM;
+}
+
+Double_t getMCAngle2H(Double_t m_LAng, TLorentzVector m_lvBeam)
+{
+	TLorentzVector m_lvTar(0.0, 0.0, 0.0, cs::mass2H);
+	TLorentzVector m_lvCM = m_lvTar + m_lvBeam;
+	TVector3 m_vBoost = m_lvCM.BoostVector();
+
+	Double_t m_ThetaCM2H = m_lvCM.Theta();
+	Double_t m_gammaSquare2H = m_lvCM.Gamma()*m_lvCM.Gamma();
+	Double_t m_tanSquare = tan(m_LAng*TMath::DegToRad()) * tan(m_LAng*TMath::DegToRad());
+	Double_t m_cosLeftAng = (1.0 - m_gammaSquare2H*m_tanSquare)/(1 + m_gammaSquare2H*m_tanSquare);
+	Double_t m_sqlangCM = (acos(m_cosLeftAng)-m_ThetaCM2H)*TMath::RadToDeg();
+	return m_sqlangCM;
 }
 
 Int_t getStripNumber(ROOT::VecOps::RVec<Double_t> &inputArray)
@@ -561,10 +609,11 @@ bool filterSQ(ROOT::VecOps::RVec<unsigned short> &SQ, Double_t threshold)
 	return sqFlag;
 }
 
-void loadCorrectionParameters()
+void loadCorrectionParameters(Int_t m_runNo)
 {
+	parameters.clear();
 	std::string line;
-	std::string fName = "/home/zalewski/Desktop/6He/analysis/experimental/good/pics/db";
+	std::string fName = "/home/zalewski/Desktop/6He/analysis/experimental2/chosen.txt";
 
 	std::ifstream outStreamGenerated(fName, std::ios::in);
 	if (!outStreamGenerated)
@@ -572,18 +621,25 @@ void loadCorrectionParameters()
 		printf("Failed to open file: %s\n", fName.c_str());
 	}
 
-	int jumpTo = cs::fileToProcess + (int)'a';
-	std::getline(outStreamGenerated, line, (char)jumpTo);
-	printf("%s\n", line.c_str());
+	int jumpTo = m_runNo;
+	for (int iii = 0; iii<jumpTo; iii++)
+	{
+		std::getline(outStreamGenerated, line, ';');
+	}
+	
+	//printf("%s\n", line.c_str());
 
 	float tmpContainer;
-	for (int iii = 0; iii < 11; iii++)
+	for (int iii = 0; iii < 10; iii++)
 	{
 		outStreamGenerated>>tmpContainer;
-		parameters.push_back(tmpContainer);
-		printf("%s = %f\n", parNames[iii].c_str(), parameters[iii]);
+		if (iii!=0)
+		{
+			parameters.push_back(tmpContainer);
+			//printf("%s = %f\t", parNames[iii-1].c_str(), parameters[iii-1]);
+		}
 	}
-
+	std::cout<<std::endl;
 }
 
 void loadCalibrationParameters()
@@ -741,7 +797,7 @@ void translator(TString inFileName)
 	inputFile.Close();	
 }
 
-void analysis(TString inFileName)
+void analysis(TString inFileName, Int_t versionNo)
 {
 	inFileName.ReplaceAll("raw","cal");
 	TString treeName = "calibrated";
@@ -764,13 +820,18 @@ void analysis(TString inFileName)
 	GCutlangEDD = (TCutG*)cutgFile.Get("langEDD");
 	GCutpartPT = (TCutG*)cutgFile.Get("partPT");
 
+	TFile MCcutgFile("/home/zalewski/aku/analysis/mcCuts.root","READ");
+	GCutmcPP = (TCutG*)MCcutgFile.Get("mcPP");
+	GCutmcDD = (TCutG*)MCcutgFile.Get("mcDD");
+	GCutmcHe6 = (TCutG*)MCcutgFile.Get("mcHe6");
+
 	AELC *h1_Si = new ELC(1, 1, si_Nel, 2.35, si_A, si_Z, si_W, 500.,1500);
 	AELC *h2_Si = new ELC(2, 1, si_Nel, 2.35, si_A, si_Z, si_W, 500.,1500);
 	AELC *h3_Si = new ELC(3, 1, si_Nel, 2.35, si_A, si_Z, si_W, 500.,1500);
 
 	AELC *he4_Si = new ELC(4, 2, si_Nel, 2.35, si_A, si_Z, si_W, 500.,1500);
 	AELC *he6_Si = new ELC(6, 2, si_Nel, 2.35, si_A, si_Z, si_W, 500.,1500);
-
+	/*
 	siEloss1H.SetEL(1, 2.330); // density in g/cm3
 	siEloss1H.AddEL(14., 28.086, 1);  //Z, mass
 	siEloss1H.SetZP(1., 1.);		//Z, A
@@ -800,7 +861,7 @@ void analysis(TString inFileName)
 	siEloss6He.SetZP(2., 6.);		//Z, A
 	siEloss6He.SetEtab(100000, 200.);	// ?, MeV calculate ranges
 	siEloss6He.SetDeltaEtab(100);
-
+	*/
 	Double_t qDT_45 = cs::Qdt;
 	Double_t qDT_0 = 0.0;
 
@@ -822,7 +883,7 @@ void analysis(TString inFileName)
 
 		case 1:
 		{
-			tarPos = parameters[sTarPos1];
+			tarPos = 0.0 + parameters[sTarPos];
 			tarThickness = 80.0 + cs::tarThicknessShift;
 			tarAngle = 45.0* TMath::DegToRad();
 
@@ -836,11 +897,11 @@ void analysis(TString inFileName)
 
 		case 2:
 		{
-			tarPos = parameters[sTarPos2];
+			tarPos = 0.0 + parameters[sTarPos];
 			tarThickness = 160 + 2*cs::tarThicknessShift;
 			tarAngle = 6.0 * TMath::DegToRad();
 
-			sqlAng = (50.0 + parameters[sLang1]) * TMath::DegToRad();
+			sqlAng = (50.0 + parameters[sLang2]) * TMath::DegToRad();
 			sqlDist = 170.0;
 
 			sqrAng = (15.0 + parameters[sRang]) * TMath::DegToRad();
@@ -850,7 +911,7 @@ void analysis(TString inFileName)
 
 		case 3:
 		{
-			tarPos = parameters[sTarPos3];
+			tarPos = 0.0 + parameters[sTarPos];
 			tarThickness = 160 + 2*cs::tarThicknessShift;
 			tarAngle = 0.0 * TMath::DegToRad();
 
@@ -872,12 +933,6 @@ void analysis(TString inFileName)
 	Double_t Y6Helab = cs::sqrYstart;
 	Double_t Z6Helab = sqrDist*cos(sqrAng) - (cs::sqrXzero) * sin(sqrAng);
 	TVector3 rightDetPosition(X6Helab, Y6Helab, Z6Helab);
-
-	printf("Working with leftDetPosition: X = %f, Y=%f, Z=%f\tand with rightDetPosition: X = %f, Y=%f, Z=%f\n", 
-	leftDetPosition.X(), leftDetPosition.Y(), leftDetPosition.Z(), rightDetPosition.X(), rightDetPosition.Y(), rightDetPosition.Z());
-
-	for(std::string myElement : parNames)
-
 
 	inDF.Filter(filterLeftDetector, {"cal_SQX_L"})
 		.Filter(filterLeftDetector, {"cal_SQY_L"})
@@ -915,8 +970,10 @@ void analysis(TString inFileName)
 					 .Define("rightLabVertex", [rightDetPosition](TVector3 rightDetVertex){return rightDetVertex+rightDetPosition;}, {"rightDetVertex"})
 					 .Define("v2H", [](TVector3 leftLabVertex, TVector3 tarVertex){return TVector3(leftLabVertex-tarVertex);}, {"leftLabVertex", "tarVertex"})
 					 .Define("v6He", [](TVector3 rightLabVertex, TVector3 tarVertex){return TVector3(rightLabVertex-tarVertex);}, {"rightLabVertex", "tarVertex"})
-					 .Define("sqlang", [](TVector3 v2H, TVector3 vBeam){return v2H.Angle(vBeam)*TMath::RadToDeg();}, {"v2H", "vBeam"})
-					 .Define("sqrang", [](TVector3 v6He, TVector3 vBeam){return v6He.Angle(vBeam)*TMath::RadToDeg();}, {"v6He", "vBeam"})
+					 .Define("sqlang", [](TVector3 v2H, TVector3 vBeam){return vBeam.Angle(v2H)*TMath::RadToDeg();}, {"v2H", "vBeam"})
+					 .Define("mc1H", getMCAngle1H, {"sqlang", "lvBeam"})
+					 .Define("mc2H", getMCAngle2H, {"sqlang", "lvBeam"})
+					 .Define("sqrang", [](TVector3 v6He, TVector3 vBeam){return vBeam.Angle(v6He)*TMath::RadToDeg();}, {"v6He", "vBeam"})
 					 .Define("he4", [](Double_t sqretot, Double_t sqrde){return GCutHe4->IsInside(sqretot,sqrde);}, {"sqretot","sqrde"})
 					 .Define("he6", [](Double_t sqretot, Double_t sqrde){return GCutHe6->IsInside(sqretot,sqrde);}, {"sqretot","sqrde"})
 					 .Define("dE2H", [](Double_t sqletot, Double_t sqlde){return GCutdE2H->IsInside(sqletot,sqlde);}, {"sqletot","sqlde"})
@@ -938,6 +995,9 @@ void analysis(TString inFileName)
 					 .Define("sqlangdd", getDDLang, {"thetaCM","lvBeam"})
 					 .Define("sqrangdd", getDDRang, {"thetaCM","lvBeam"})
 					 .Define("myCol", recoPT, {"sqlang","lvBeam"})
+					 .Define("mcPP", [](Double_t sqrang, Double_t sqlang){return GCutmcPP->IsInside(sqrang,sqlang);}, {"sqrang","sqlang"})
+					 .Define("mcDD", [](Double_t sqrang, Double_t sqlang){return GCutmcDD->IsInside(sqrang,sqlang);}, {"sqrang","sqlang"})
+					 .Define("mcHe6", [](Double_t sqrang, Double_t sqlang){return GCutmcHe6->IsInside(sqrang,sqlang);}, {"sqretot","sqrde"})
 
 					 .Define("sqlangdt_45", [qDT_45](Double_t thetaCM, TLorentzVector lvBeam){return getDTLang(thetaCM, lvBeam, qDT_45);}, {"thetaCM","lvBeam"})
 					 .Define("sqrangdt_45", [qDT_45](Double_t thetaCM, TLorentzVector lvBeam){return getDTRang(thetaCM, lvBeam, qDT_45);}, {"thetaCM","lvBeam"})
@@ -949,15 +1009,17 @@ void analysis(TString inFileName)
 					 .Define("sqlangpt_0", [qPT_0](Double_t thetaCM, TLorentzVector lvBeam){return getPTLang(thetaCM, lvBeam, qPT_0);}, {"thetaCM","lvBeam"})
 					 .Define("sqrangpt_0", [qPT_0](Double_t thetaCM, TLorentzVector lvBeam){return getPTRang(thetaCM, lvBeam, qPT_0);}, {"thetaCM","lvBeam"});
 
-	auto smallDF = outDF.Filter("pp || dd || pt");
-	auto c = smallDF.Count();
-	Int_t customClusterSize = *c / numberOfThreads;
 	ROOT::RDF::RSnapshotOptions myOpts;
-	myOpts.fAutoFlush=customClusterSize;
+	auto smallReal = outDF.Filter("pp || dd || pt");
+	TString smallRealFname = "/home/zalewski/dataTmp/small/small" + std::to_string(cs::runNo) + ".root";
+	auto smallMC = outDF.Filter("(mcPP || mcDD) && mcHe6");
+	TString smallMCFname = outFilename;
 
-	smallDF.Snapshot("small", "/home/zalewski/dataTmp/small/small" + std::to_string(cs::runNo) + ".root", columnList, myOpts);
 
-	outDF.Snapshot("analyzed", outFilename.Data());
+	//smallReal.Snapshot("smallReal", smallRealFname.Data(), columnList, myOpts);
+	smallMC.Snapshot("smallMC", smallMCFname.ReplaceAll("MC","small").Data(), MCcolumnList, myOpts);
+	//outDF.Snapshot("analyzed", outFilename.Data());
+	printf("%s\n",outFilename.Data());
 }
 
 void ui()
@@ -977,7 +1039,7 @@ void ui()
 	}
 
 	loadCalibrationParameters();
-	loadCorrectionParameters();
+	//loadCorrectionParameters();
 	TString str_name, sourceDir;
 
 	if (cs::runNo==1 || cs::runNo==2 || cs::runNo==3)
@@ -1005,17 +1067,19 @@ void ui()
 	while (TObject *obj = bluster())
 	{
 		str_name = obj->GetName();
-		std::cout<<str_name<<std::endl;
-		TString fID = "v" + std::to_string(cs::fileToProcess);
+		//std::cout<<str_name<<std::endl;
+
 		if ((str_name.Contains("raw_geo") && !str_name.Contains("li9")) ||
-		(str_name.Contains("mc") && !str_name.Contains("out") && str_name.Contains(fID.Data())))
+		(str_name.Contains("mc") && !str_name.Contains("out")))
 		{
 			TString inputFilePath = sourceDir + str_name;
-			//printf("fName:\t%s\n",inputFilePath.Data());
+			TString versionNumber(str_name(7,1));
+			//printf("fName:\t%s\tversionNo: %d\n",str_name.Data(), versionNumber.Atoi());
 			//translator(inputFilePath);
 			//cleaner(inputFilePath);
 			//calibratorCaller(inputFilePath);
-			analysis(inputFilePath);
+			loadCorrectionParameters(versionNumber.Atoi());
+			//analysis(inputFilePath, versionNumber.Atoi());
 			//makeSmallFile();
 		}
 	}

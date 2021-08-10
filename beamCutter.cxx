@@ -191,7 +191,7 @@ int beamCutter()
 	rnd = new TRandom3();
 	ROOT::EnableImplicitMT();
 	Int_t numberOfThreads = 20;
-	ROOT::RDataFrame inDF("simplified", "/home/zalewski/dataTmp/simp/geo3/simp_run*.root");
+	ROOT::RDataFrame inDF("simplified", "/home/zalewski/dataTmp/simp/geo3/simp_geo3.root");
 	auto outDF = inDF.Filter("nx1<100 && nx2<100 && ny1<100 && ny2<100")
 						.Filter("trigger==1")
 						.Filter("tdcF3[0]*tdcF3[1]*tdcF3[2]*tdcF3[3]*tdcF5[0]*tdcF5[1]*tdcF5[2]*tdcF5[3]")

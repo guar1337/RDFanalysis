@@ -131,8 +131,8 @@ Bool_t simplifier123::Process(Long64_t entry)
 		tSQY_R[iii]	=	NeEvent_tSQY_R[iii];
 		CsI_R[iii]	=	NeEvent_CsI_R[iii];
 		tCsI_R[iii]	=	NeEvent_tCsI_R[iii];
-		SQ300[iii]	=	NeEvent_SQ300[iii];
-		tSQ300[iii]	=	NeEvent_tSQ300[iii];
+		SQ300[iii]	=	0;//NeEvent_SQ300[iii];
+		tSQ300[iii]	=	0;//NeEvent_tSQ300[iii];
 	}
 	
 
@@ -162,10 +162,7 @@ void simplifier123::SlaveTerminate()
 void simplifier123::Terminate()
 {
 	// The Terminate() function is the last function to be called during
-	// a query. It always runs on the client,	it can be used to present
-	// the results graphically or save the results to file.
-	outTree->Write();
-	outFile->Close();
+	// a query. It always runs on the client,	it can be used to presenttranslator
 	delete outFile;
 
 }

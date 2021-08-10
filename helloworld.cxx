@@ -28,16 +28,16 @@
 
 
 #include "helloworld.hxx"
-
+Int_t modifier = 9.0;
 
 std::vector<Double_t> getMWPC(Double_t m_MWPC_1_X, Double_t m_MWPC_1_Y, Double_t m_MWPC_1_Z, Double_t m_MWPC_2_X, Double_t m_MWPC_2_Y, Double_t m_MWPC_2_Z)
 {
 	std::vector<Double_t> rvecMWPC(6);
-	rvecMWPC.at(0) = m_MWPC_1_X;
-	rvecMWPC.at(1) = m_MWPC_1_Y;
+	rvecMWPC.at(0) = m_MWPC_1_X - 1.0;
+	rvecMWPC.at(1) = m_MWPC_1_Y - 2.1375;
 	rvecMWPC.at(2) = m_MWPC_1_Z;
-	rvecMWPC.at(3) = m_MWPC_2_X;
-	rvecMWPC.at(4) = m_MWPC_2_Y;
+	rvecMWPC.at(3) = m_MWPC_2_X + 0.2; 
+	rvecMWPC.at(4) = m_MWPC_2_Y - 1.125;
 	rvecMWPC.at(5) = m_MWPC_2_Z;
 
 	return rvecMWPC;
@@ -61,17 +61,17 @@ TVector3 getTarVertex(std::vector<Double_t> rvecMWPC, Int_t m_geo, const Double_
 	{
 	case 1:
 		m_tarAngle = 45.0*TMath::DegToRad();
-		m_tarPos = m_pars[sTarPos1];
+		m_tarPos = modifier;
 		break;
 
 	case 2:
 		m_tarAngle = 6.0*TMath::DegToRad();
-		m_tarPos = m_pars[sTarPos2];
+		m_tarPos = modifier;
 		break;
 
 	case 3:
 		m_tarAngle = 0.0*TMath::DegToRad();
-		m_tarPos = m_pars[sTarPos3];
+		m_tarPos = modifier;
 		break;
 	
 	default:
@@ -121,17 +121,17 @@ TVector3 getRightDetVertex(Int_t m_xStrip, Int_t m_yStrip, Int_t m_geo)
 
 TVector3 getLeftDetPosition(Int_t m_geo, const Double_t *m_pars)
 {
-	Double_t X2Hlab = sqlDist*sin(leftAngle[m_geo-1]) + cs::sqlXzero * cos(leftAngle[m_geo-1]);
+	Double_t X2Hlab = sqlDist*sin(leftAngle[m_geo-1]) + (cs::sqlXzero) * cos(leftAngle[m_geo-1]);
 	Double_t Y2Hlab = cs::sqlYstart + cs::widthStripY;
-	Double_t Z2Hlab = sqlDist*cos(leftAngle[m_geo-1]) - cs::sqlXzero * sin(leftAngle[m_geo-1]);
+	Double_t Z2Hlab = sqlDist*cos(leftAngle[m_geo-1]) - (cs::sqlXzero) * sin(leftAngle[m_geo-1]);
 	return TVector3(X2Hlab, Y2Hlab, Z2Hlab);
 }
 
-TVector3 getRightDetPosition(Int_t m_geo)
+TVector3 getRightDetPosition(Int_t m_geo, const Double_t *m_pars)
 {
-	Double_t X6Helab = sqrDist*sin(-rightAngle) - cs::sqrXzero * cos(rightAngle);
+	Double_t X6Helab = sqrDist*sin(-rightAngle) - (cs::sqlXzero) * cos(rightAngle);
 	Double_t Y6Helab = cs::sqrYstart + cs::widthStripY;
-	Double_t Z6Helab = sqrDist*cos(rightAngle) - cs::sqrXzero * sin(rightAngle);
+	Double_t Z6Helab = sqrDist*cos(rightAngle) - (cs::sqlXzero) * sin(rightAngle);
 	return TVector3(X6Helab, Y6Helab, Z6Helab);
 }
 
@@ -312,10 +312,10 @@ struct CostFunctor
 		Double_t tarMass1H = cs::mass1H;
 		Double_t tarMass2H = cs::mass2H;
 
-		tarPos[0] = par[sTarPos1];
-		tarPos[1] = par[sTarPos2];
-		tarPos[2] = par[sTarPos3];
-
+		
+		tarPos[0] = modifier;
+		tarPos[1] = modifier;
+		tarPos[2] = modifier;
 		tarAngle[0] = 45.0 * TMath::DegToRad();
 		tarAngle[1] = 6.0 * TMath::DegToRad();
 		tarAngle[2] = 0.0 * TMath::DegToRad();
@@ -330,11 +330,11 @@ struct CostFunctor
 
 		ROOT::RDataFrame smallDF("small", smallFile);
 
-		auto newDF = smallDF.Define("X1",[&par](Double_t MWPC_1_X){return (MWPC_1_X  + par[sMWPC_1_X]);}, {"MWPC_1_X"})
-									.Define("Y1",[&par](Double_t MWPC_1_Y){return (MWPC_1_Y  + par[sMWPC_1_Y]);}, {"MWPC_1_Y"})
+		auto newDF = smallDF.Define("X1",[&par](Double_t MWPC_1_X){return (MWPC_1_X);}, {"MWPC_1_X"})
+									.Define("Y1",[&par](Double_t MWPC_1_Y){return (MWPC_1_Y);}, {"MWPC_1_Y"})
 									.Define("Z1",[&par](){return -816.0;})
-									.Define("X2",[&par](Double_t MWPC_2_X){return (MWPC_2_X  + par[sMWPC_2_X]);}, {"MWPC_2_X"})
-									.Define("Y2",[&par](Double_t MWPC_2_Y){return (MWPC_2_Y  + par[sMWPC_2_Y]);}, {"MWPC_2_Y"})
+									.Define("X2",[&par](Double_t MWPC_2_X){return (MWPC_2_X);}, {"MWPC_2_X"})
+									.Define("Y2",[&par](Double_t MWPC_2_Y){return (MWPC_2_Y);}, {"MWPC_2_Y"})
 									.Define("Z2",[&par](){return -270.0;})
 									.Define("MWPC", getMWPC, {"X1", "Y1", "Z1", "X2", "Y2", "Z2"})
 				.Define("vBeam", getBeamVector, {"MWPC", "kinE"})
@@ -345,7 +345,7 @@ struct CostFunctor
 				.Define("leftLabVertex", [par](Int_t geo){return getLeftDetPosition(geo, par);}, {"geo"})
 				.Define("leftGlobVertex", [](TVector3 leftDetVertex, TVector3 leftLabVertex){return TVector3(leftDetVertex+leftLabVertex);}, {"leftDetVertex", "leftLabVertex"})
 				.Define("rightDetVertex", getRightDetVertex, {"SQX_R_strip", "SQY_R_strip", "geo"})
-				.Define("rightLabVertex", [par](Int_t geo){return getRightDetPosition(geo);}, {"geo"})
+				.Define("rightLabVertex", [par](Int_t geo){return getRightDetPosition(geo, par);}, {"geo"})
 				.Define("rightGlobVertex", [](TVector3 rightDetVertex, TVector3 rightLabVertex){return TVector3(rightDetVertex+rightLabVertex);}, {"rightDetVertex", "rightLabVertex"})
 
 				.Define("v2H", [](TVector3 leftGlobVertex, TVector3 tarVertex){return TVector3(leftGlobVertex-tarVertex);}, {"leftGlobVertex", "tarVertex"})
@@ -398,8 +398,8 @@ struct CostFunctor
 		residual[0] = normChi2PP;
 		residual[1] = normChi2DD;
 		residual[2] = normChi2PTLeft;
-		residual[3] = normChi2PTRight;
-
+		//residual[3] = normChi2PTRight;
+		//normChi2PTRight
 		return true;
 	}
 };
@@ -417,9 +417,9 @@ void drawResults(double *finalPars, int myRunNumber = 0)
 	Double_t tarMass1H = cs::mass1H;
 	Double_t tarMass2H = cs::mass2H;
 
-	tarPos[0] = finalPars[sTarPos1];
-	tarPos[1] = finalPars[sTarPos2];
-	tarPos[2] = finalPars[sTarPos3];
+	tarPos[0] = modifier;
+	tarPos[1] = modifier;
+	tarPos[2] = modifier;
 
 	tarAngle[0] = 45.0 * TMath::DegToRad();
 	tarAngle[1] = 6.0 * TMath::DegToRad();
@@ -435,11 +435,11 @@ void drawResults(double *finalPars, int myRunNumber = 0)
 	ROOT::EnableImplicitMT();
 	ROOT::RDataFrame smallDF("small", smallFile);
 
-		auto newDF = smallDF.Define("X1",[&finalPars](Double_t MWPC_1_X){return (MWPC_1_X  + finalPars[sMWPC_1_X]);}, {"MWPC_1_X"})
-									.Define("Y1",[&finalPars](Double_t MWPC_1_Y){return (MWPC_1_Y  + finalPars[sMWPC_1_Y]);}, {"MWPC_1_Y"})
+		auto newDF = smallDF.Define("X1",[&finalPars](Double_t MWPC_1_X){return (MWPC_1_X);}, {"MWPC_1_X"})
+									.Define("Y1",[&finalPars](Double_t MWPC_1_Y){return (MWPC_1_Y);}, {"MWPC_1_Y"})
 									.Define("Z1",[&finalPars](){return -816.0;})
-									.Define("X2",[&finalPars](Double_t MWPC_2_X){return (MWPC_2_X  + finalPars[sMWPC_2_X]);}, {"MWPC_2_X"})
-									.Define("Y2",[&finalPars](Double_t MWPC_2_Y){return (MWPC_2_Y  + finalPars[sMWPC_2_Y]);}, {"MWPC_2_Y"})
+									.Define("X2",[&finalPars](Double_t MWPC_2_X){return (MWPC_2_X );}, {"MWPC_2_X"})
+									.Define("Y2",[&finalPars](Double_t MWPC_2_Y){return (MWPC_2_Y);}, {"MWPC_2_Y"})
 									.Define("Z2",[&finalPars](){return -270.0;})
 									.Define("MWPC", getMWPC, {"X1", "Y1", "Z1", "X2", "Y2", "Z2"})
 				.Define("vBeam", getBeamVector, {"MWPC", "kinE"})
@@ -450,7 +450,7 @@ void drawResults(double *finalPars, int myRunNumber = 0)
 							.Define("leftLabVertex", [finalPars](Int_t geo){return getLeftDetPosition(geo, finalPars);}, {"geo"})
 							.Define("leftGlobVertex", [](TVector3 leftDetVertex, TVector3 leftLabVertex){return TVector3(leftDetVertex+leftLabVertex);}, {"leftDetVertex", "leftLabVertex"})
 							.Define("rightDetVertex", getRightDetVertex, {"SQX_R_strip", "SQY_R_strip", "geo"})
-							.Define("rightLabVertex", [finalPars](Int_t geo){return getRightDetPosition(geo);}, {"geo"})
+							.Define("rightLabVertex", [finalPars](Int_t geo){return getRightDetPosition(geo, finalPars);}, {"geo"})
 							.Define("rightGlobVertex", [](TVector3 rightDetVertex, TVector3 rightLabVertex){return TVector3(rightDetVertex+rightLabVertex);}, {"rightDetVertex", "rightLabVertex"})
 
 							.Define("v2H", [](TVector3 leftGlobVertex, TVector3 tarVertex){return TVector3(leftGlobVertex-tarVertex);}, {"leftGlobVertex", "tarVertex"})
@@ -556,7 +556,7 @@ void drawResults(double *finalPars, int myRunNumber = 0)
 	myCanvas.cd(4);
 	difDDSqrang.Draw("AP");
 	//TString outFname = "/home/zalewski/Desktop/6He/analysis/experimental/myData" + myRunNumber + "cvs";
-	myCanvas.Print(TString::Format("/home/zalewski/Desktop/6He/analysis/experimental/myData%d", myRunNumber));
+	myCanvas.Print(TString::Format("/home/zalewski/Desktop/6He/analysis/experimental2/myData%d.png", myRunNumber));
 	myCanvas.SaveAs("/home/zalewski/Desktop/macro.C");
 
 
@@ -585,36 +585,24 @@ int main(int argc, char** argv)
 	diffOpts.relative_step_size = 0.1;
 	double x[numberOfParameters];
 	ceres::CostFunction* cost_function =
-		new ceres::NumericDiffCostFunction<CostFunctor, ceres::CENTRAL, 4, numberOfParameters>(new CostFunctor, ceres::DO_NOT_TAKE_OWNERSHIP, 2, diffOpts);
+		new ceres::NumericDiffCostFunction<CostFunctor, ceres::CENTRAL, 2, numberOfParameters>(new CostFunctor, ceres::DO_NOT_TAKE_OWNERSHIP, 2, diffOpts);
 //                                                           |        |   |
 //                               Finite Differencing Scheme -+        |   |
 //                               Dimension of residual ---------------+   |
 //                               Dimension of x --------------------------+
 	problem.AddResidualBlock(cost_function, nullptr, x);
 
-	lowerParamBound[sMWPC_1_X] = -10.0;
-	lowerParamBound[sMWPC_1_Y] = -10.0;
-	lowerParamBound[sMWPC_2_X] = -10.0;
-	lowerParamBound[sMWPC_2_Y] = -10.0;
-	lowerParamBound[sTarPos1] = -10.0;
-	lowerParamBound[sTarPos2] = -10.0;
-	lowerParamBound[sTarPos3] = -10.0;
 	lowerParamBound[sLang1] = -3.0;
 	lowerParamBound[sLang2] = -3.0;
 	lowerParamBound[sLang3] = -3.0;
 	lowerParamBound[sRang] = -3.0;
 
-	upperParamBound[sMWPC_1_X] = 10.0;
-	upperParamBound[sMWPC_1_Y] = 10.0;
-	upperParamBound[sMWPC_2_X] = 10.0;
-	upperParamBound[sMWPC_2_Y] = 10.0;
-	upperParamBound[sTarPos1] = 10.0;
-	upperParamBound[sTarPos2] = 10.0;
-	upperParamBound[sTarPos3] = 10.0;
+
 	upperParamBound[sLang1] = 3.0;
 	upperParamBound[sLang2] = 3.0;
 	upperParamBound[sLang3] = 3.0;
 	upperParamBound[sRang] = 3.0;
+
 
 	for (int iii = 0; iii < numberOfParameters; iii++)
 	{

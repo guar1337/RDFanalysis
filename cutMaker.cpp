@@ -300,13 +300,30 @@ int cutMaker()
    partPT->SetPoint(3,24.0526,20.987);
    partPT->SetPoint(4,22.8235,30.0676);
    partPT->SetPoint(5,22.0364,30.2999);
-  
+
+   TCutG	*dehe6Ene = new TCutG("dehe6Ene",12);
+	dehe6Ene->SetVarX("kinE-(sqlde+sqletot)");
+	dehe6Ene->SetVarY("sqrde");
+   dehe6Ene->SetPoint(0,22.3625,30.4335);
+   dehe6Ene->SetPoint(1,33.3186,30.0434);
+   dehe6Ene->SetPoint(2,54.6429,29.0193);
+   dehe6Ene->SetPoint(3,57.6892,27.5076);
+   dehe6Ene->SetPoint(4,61.3234,25.5082);
+   dehe6Ene->SetPoint(5,61.1631,23.7039);
+   dehe6Ene->SetPoint(6,54.4291,23.8014);
+   dehe6Ene->SetPoint(7,34.0134,25.1181);
+   dehe6Ene->SetPoint(8,24.5003,25.8983);
+   dehe6Ene->SetPoint(9,20.2247,27.7026);
+   dehe6Ene->SetPoint(10,20.7592,29.0681);
+   dehe6Ene->SetPoint(11,22.3625,30.4335);
+
 
    rangEPT->Write();
    langEPT->Write();
    angAngPT->Write();
    dehe4->Write();
    dehe6->Write();
+   dehe6Ene->Write();
    de2H->Write();
    de3H->Write();
    angAngPP->Write();

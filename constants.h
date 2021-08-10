@@ -7,8 +7,8 @@
 namespace cs
 {
 	//*************************DETS DISPLACEMENT*******************************************
-	static const float		widthStripX	=	1.8125;
-	static const float		widthStripY	=	3.625;
+	static const float		widthStripX	=	2.0;//1.8125;
+	static const float		widthStripY	=	4.0;//3.625;
 
 	static const float		sqlXzero	=	widthStripX * 15.5;//28.09375;
 	static const float		sqlYzero	=	-widthStripY * 7.5;//-27.1875;
@@ -128,10 +128,10 @@ namespace cs
 	static const TString 	s_inFname("run00_12");
 	static const TString	dir_gcut("/home/zalewski/aku/wrk/GCuts/");
 
-	static const int		runNo = 10;
-	static const int		fileToProcess = 0;
+	static const int		runNo = 30;
+	static const int		fileToProcess = 9;
 	static const TString	inDir = "raw";
-	static const bool 	fixedMWPC = false;
-	static const int		tarMass = 1;
+	static const bool 		fixedMWPC = false;
+	static const int		tarMass = 2;
 }
 #endif

@@ -38,8 +38,8 @@ public :
    TTreeReaderArray<unsigned short> NeEvent_SQX_R = {fReader, "NeEvent.SQX_R[32]"};
    TTreeReaderArray<unsigned short> NeEvent_tSQX_R = {fReader, "NeEvent.tSQX_R[32]"};
    TTreeReaderArray<unsigned short> NeEvent_SQY_R = {fReader, "NeEvent.SQY_R[16]"};
-   TTreeReaderArray<unsigned short> NeEvent_SQ300 = {fReader, "NeEvent.SQ300[16]"};
-   TTreeReaderArray<unsigned short> NeEvent_tSQ300 = {fReader, "NeEvent.tSQ300[16]"};
+   //TTreeReaderArray<unsigned short> NeEvent_SQ300 = {fReader, "NeEvent.SQ300[16]"};
+   //TTreeReaderArray<unsigned short> NeEvent_tSQ300 = {fReader, "NeEvent.tSQ300[16]"};
    TTreeReaderArray<unsigned short> NeEvent_tSQY_R = {fReader, "NeEvent.tSQY_R[16]"};
    TTreeReaderArray<unsigned short> NeEvent_F3 = {fReader, "NeEvent.F3[4]"};
    TTreeReaderArray<unsigned short> NeEvent_tF3 = {fReader, "NeEvent.tF3[4]"};

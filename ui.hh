@@ -16,7 +16,7 @@
 
 #include "/home/zalewski/aku/ELC/AELC.h"
 #include "/home/zalewski/aku/ELC/ELC.h"
-#include "/home/zalewski/aku/TELoss/TELoss.h"
+//#include "/home/zalewski/aku/TELoss/TELoss.h"
 
 //global variables used by couple of functions
 	Int_t numberOfThreads;
@@ -50,8 +50,27 @@
 										"pt",
 										"partPT"};
 
-	enum sPar {sMWPC_1_X, sMWPC_1_Y, sMWPC_2_X, sMWPC_2_Y, sTarPos1, sTarPos2, sTarPos3, sLang1, sLang2, sLang3, sRang};
-	std::vector<std::string> parNames = {"sMWPC_1_X", "sMWPC_1_Y", "sMWPC_2_X", "sMWPC_2_Y", "sTarPos1", "sTarPos2", "sTarPos3", "sLang1", "sLang2", "sLang3", "sRang"};
+	std::vector<std::string> MCcolumnList{"SQX_L_strip",
+										"SQX_R_strip",
+										"SQY_L_strip",
+										"SQY_R_strip",
+										"geo",
+										"MWPC_1_X",
+										"MWPC_2_X",
+										"MWPC_1_Y",
+										"MWPC_2_Y",
+										"kinE",
+										"mcPP",
+										"mcDD",
+										"fsqlang",
+										"lv2H_CM.",
+										"fevx",
+										"fevy",
+										"fevz"};
+
+
+	enum sPar {sMWPC_1_X, sMWPC_1_Y, sMWPC_2_X, sMWPC_2_Y, sTarPos, sLang1, sLang2, sLang3, sRang};
+	std::vector<std::string> parNames = {"sMWPC_1_X", "sMWPC_1_Y", "sMWPC_2_X", "sMWPC_2_Y", "sTarPos", "sLang1", "sLang2", "sLang3", "sRang"};
 	std::vector<Double_t> parameters;
 
 	std::vector< std::vector< float > > vecAcoef;
@@ -69,13 +88,13 @@
 	const TLorentzVector lvTar2H(0.0, 0.0, 0.0, cs::mass2H);
 	TCutG *GCutHe4, *GCutHe6, *GCutdE2H, *GCutdE3H, *GCutangAngPT;
 	TCutG *GCutpartPT, *GCutlangEPT, *GCutrangEPT, *GCutangAngPP, *GCutangAngDD, *GCutlangEPP, *GCutlangEDD;
-	TELoss siEloss1H, siEloss2H, siEloss3H, siEloss4He, siEloss6He;
+	TCutG *	GCutmcPP, *GCutmcDD, *GCutmcHe6;
+	//TELoss siEloss1H, siEloss2H, siEloss3H, siEloss4He, siEloss6He;
 	
 	//TVector3
+	Double_t sqlAng, sqrAng, tarPos, tarAngle, tarThickness, sqlDist, sqrDist;
 
-	Double_t sqlAng, sqrAng;
-	Double_t sqlDist,sqrDist;
-	Double_t tarPos, tarThickness, tarAngle;
+	Int_t myVal;
 	int si_Nel=1;
 	double si_A[1] = {28};
 	double si_Z[1] = {14};

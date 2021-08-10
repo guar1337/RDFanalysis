@@ -9,3 +9,4 @@ finder.hh
 clipboard.cpp
 analysis.code-workspace
 build/
+.vscode/settings.json

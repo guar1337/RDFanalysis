@@ -52,12 +52,12 @@ void simplifier5::Begin(TTree *inTree)
 	outTree->Branch("CsI_R",	CsI_R,	"CsI_R[16]/s");
 	outTree->Branch("tCsI_R",	tCsI_R,	"tCsI_R[16]/s");
 	outTree->Branch("F3",		F3,		"F3[4]/s");
-	outTree->Branch("tF3",		tF3,	"tF3[4]/s");
+	outTree->Branch("tdcF3",		tF3,	"tdcF3[4]/s");
 	outTree->Branch("F5",		F5,		"F5[4]/s");
-	outTree->Branch("tF5",		tF5,	"tF5[4]/s");
+	outTree->Branch("tdcF5",		tF5,	"tdcF5[4]/s");
 	outTree->Branch("F6",		F6,		"F6[4]/s");
-	outTree->Branch("tF6",		tF6,	"tF6[4]/s");
-	outTree->Branch("tMWPC",	tMWPC, 	"tMWPC[4]/s");
+	outTree->Branch("tdcF6",		tF6,	"tdcF6[4]/s");
+	outTree->Branch("tdcMWPC",	tMWPC, 	"tdcMWPC[4]/s");
 	outTree->Branch("nx1",		&nx1,	"nx1/s");
 	outTree->Branch("ny1",		&ny1,	"ny1/s");
 	outTree->Branch("nx2",		&nx2,	"nx2/s");
@@ -109,12 +109,12 @@ Bool_t simplifier5::Process(Long64_t entry)
 
 	for (int iii = 0; iii < 4; iii++)
 	{
-		aF3[iii]		= NeEvent_F3[iii];
-		aF5[iii]		= NeEvent_F5[iii];
-		aF6[iii]		= NeEvent_F6[iii];
-		tdcF3[iii]		= NeEvent_tF3[iii];
-		tdcF5[iii]		= NeEvent_tF5[iii];
-		tdcF6[iii]		= NeEvent_tF6[iii];
+		F3[iii]		= NeEvent_F3[iii];
+		F5[iii]		= NeEvent_F5[iii];
+		F6[iii]		= NeEvent_F6[iii];
+		tF3[iii]	= NeEvent_tF3[iii];
+		tF5[iii]	= NeEvent_tF5[iii];
+		tF6[iii]	= NeEvent_tF6[iii];
 		tMWPC[iii]	= NeEvent_tMWPC[iii];
 	}
 	
@@ -123,10 +123,10 @@ Bool_t simplifier5::Process(Long64_t entry)
 	{
 		SQY_L[iii]		=	NeEvent_SQY_L[iii];
 		CsI_L[iii]		=	NeEvent_CsI_L[iii];
-		tSQY_L[iii]	=	NeEvent_tSQY_L[iii];
+		tSQY_L[iii]		=	NeEvent_tSQY_L[iii];
 		tCsI_L[iii]		=	NeEvent_tCsI_L[iii];
 		SQY_R[iii]		=	NeEvent_SQY_R[iii];
-		tSQY_R[iii]	=	NeEvent_tSQY_R[iii];
+		tSQY_R[iii]		=	NeEvent_tSQY_R[iii];
 		CsI_R[iii]		=	NeEvent_CsI_R[iii];
 		tCsI_R[iii]		=	NeEvent_tCsI_R[iii];
 	}
