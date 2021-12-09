@@ -995,6 +995,7 @@ void analysis(TString inFileName, Int_t versionNo)
 					 .Define("sqlangdd", getDDLang, {"thetaCM","lvBeam"})
 					 .Define("sqrangdd", getDDRang, {"thetaCM","lvBeam"})
 					 .Define("myCol", recoPT, {"sqlang","lvBeam"})
+					 .Define("rTheta", [](TLorentzVector lv2H_CM){return 180.0 - lv2H_CM.Theta()*TMath::RadToDeg();}, {"lv2H_CM."})
 					 .Define("mcPP", [](Double_t sqrang, Double_t sqlang){return GCutmcPP->IsInside(sqrang,sqlang);}, {"sqrang","sqlang"})
 					 .Define("mcDD", [](Double_t sqrang, Double_t sqlang){return GCutmcDD->IsInside(sqrang,sqlang);}, {"sqrang","sqlang"})
 					 .Define("mcHe6", [](Double_t sqrang, Double_t sqlang){return GCutmcHe6->IsInside(sqrang,sqlang);}, {"sqretot","sqrde"})
@@ -1012,12 +1013,12 @@ void analysis(TString inFileName, Int_t versionNo)
 	ROOT::RDF::RSnapshotOptions myOpts;
 	auto smallReal = outDF.Filter("pp || dd || pt");
 	TString smallRealFname = "/home/zalewski/dataTmp/small/small" + std::to_string(cs::runNo) + ".root";
-	auto smallMC = outDF.Filter("(mcPP || mcDD) && mcHe6");
+	//auto smallMC = outDF.Filter("(mcPP || mcDD) && mcHe6");
 	TString smallMCFname = outFilename;
 
 
 	//smallReal.Snapshot("smallReal", smallRealFname.Data(), columnList, myOpts);
-	smallMC.Snapshot("smallMC", smallMCFname.ReplaceAll("MC","small").Data(), MCcolumnList, myOpts);
+	outDF.Snapshot("smallMC", smallMCFname.ReplaceAll("MC","small").Data());
 	//outDF.Snapshot("analyzed", outFilename.Data());
 	printf("%s\n",outFilename.Data());
 }
@@ -1078,10 +1079,14 @@ void ui()
 			//translator(inputFilePath);
 			//cleaner(inputFilePath);
 			//calibratorCaller(inputFilePath);
-			loadCorrectionParameters(versionNumber.Atoi());
+			//loadCorrectionParameters(versionNumber.Atoi());
 			//analysis(inputFilePath, versionNumber.Atoi());
 			//makeSmallFile();
 		}
 	}
+
+	loadCorrectionParameters(5);
+	analysis("/home/zalewski/dataTmp/MC/geo1/mc_2H_v5_big.root", 5);
+
 	stopwatch->Print();
 }
