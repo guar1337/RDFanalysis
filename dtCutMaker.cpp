@@ -1,0 +1,261 @@
+int dtCutMaker()
+{
+   TCutG *dtLEneRAng = new TCutG("dtLEneRAng",15);
+   dtLEneRAng->SetVarX("sqrang");
+   dtLEneRAng->SetVarY("sqlde+sqletot");
+   dtLEneRAng->SetTitle("Graph");
+   dtLEneRAng->SetFillStyle(1000);
+   dtLEneRAng->SetPoint(0,4.39245,6.38182);
+   dtLEneRAng->SetPoint(1,7.78868,12.7636);
+   dtLEneRAng->SetPoint(2,10.3019,20.361);
+   dtLEneRAng->SetPoint(3,15.6906,42.039);
+   dtLEneRAng->SetPoint(4,17.9321,61.7922);
+   dtLEneRAng->SetPoint(5,21.7585,68.3766);
+   dtLEneRAng->SetPoint(6,25.3811,65.439);
+   dtLEneRAng->SetPoint(7,27.4868,56.7273);
+   dtLEneRAng->SetPoint(8,28.483,47.4078);
+   dtLEneRAng->SetPoint(9,24.8377,33.1247);
+   dtLEneRAng->SetPoint(10,19.9472,28.2623);
+   dtLEneRAng->SetPoint(11,17.9094,20.1584);
+   dtLEneRAng->SetPoint(12,10.6415,4.15325);
+   dtLEneRAng->SetPoint(13,3.91698,3.64675);
+   dtLEneRAng->SetPoint(14,4.39245,6.38182);
+
+   TCutG *dtLEneLAng = new TCutG("dtLEneLAng",21);
+   dtLEneLAng->SetVarX("sqlang");
+   dtLEneLAng->SetVarY("sqlde+sqletot");
+   dtLEneLAng->SetTitle("Graph");
+   dtLEneLAng->SetFillStyle(1000);
+   dtLEneLAng->SetPoint(0,38.0951,5.67273);
+   dtLEneLAng->SetPoint(1,45.9653,9.31948);
+   dtLEneLAng->SetPoint(2,48.6219,17.4234);
+   dtLEneLAng->SetPoint(3,48.8543,20.8675);
+   dtLEneLAng->SetPoint(4,43.2423,33.6312);
+   dtLEneLAng->SetPoint(5,40.0211,40.8234);
+   dtLEneLAng->SetPoint(6,36.5675,57.4364);
+   dtLEneLAng->SetPoint(7,39.8551,68.9844);
+   dtLEneLAng->SetPoint(8,44.9691,68.2753);
+   dtLEneLAng->SetPoint(9,48.6883,48.7247);
+   dtLEneLAng->SetPoint(10,49.6181,40.013);
+   dtLEneLAng->SetPoint(11,51.0128,36.7714);
+   dtLEneLAng->SetPoint(12,52.0423,31.8078);
+   dtLEneLAng->SetPoint(13,53.8023,25.8312);
+   dtLEneLAng->SetPoint(14,53.9683,19.8545);
+   dtLEneLAng->SetPoint(15,54.3668,14.7896);
+   dtLEneLAng->SetPoint(16,54.6657,7.5974);
+   dtLEneLAng->SetPoint(17,54.566,5.16623);
+   dtLEneLAng->SetPoint(18,53.2045,3.54545);
+   dtLEneLAng->SetPoint(19,40.2204,2.83636);
+   dtLEneLAng->SetPoint(20,38.0951,5.67273);
+
+	TCutG *noProtDeut = new TCutG("noProtDeut",16);
+	noProtDeut->SetVarX("sqletot");
+	noProtDeut->SetVarY("sqlde");
+	noProtDeut->SetTitle("Graph");
+	noProtDeut->SetFillStyle(1000);
+	noProtDeut->SetPoint(0,1.13919,15.8652);
+	noProtDeut->SetPoint(1,8.98037,11.7516);
+	noProtDeut->SetPoint(2,20.4463,8.35456);
+	noProtDeut->SetPoint(3,33.9834,5.99257);
+	noProtDeut->SetPoint(4,51.811,4.55945);
+	noProtDeut->SetPoint(5,67.3454,3.28556);
+	noProtDeut->SetPoint(6,73.929,2.86093);
+	noProtDeut->SetPoint(7,72.5236,1.3482);
+	noProtDeut->SetPoint(8,46.189,0.976645);
+	noProtDeut->SetPoint(9,11.4215,1.29512);
+	noProtDeut->SetPoint(10,1.21316,1.69321);
+	noProtDeut->SetPoint(11,0.621376,3.84289);
+	noProtDeut->SetPoint(12,0.177536,7.34607);
+	noProtDeut->SetPoint(13,0.177536,10.9289);
+	noProtDeut->SetPoint(14,0.177536,15.9979);
+	noProtDeut->SetPoint(15,1.13919,15.8652);
+
+	TCutG *bHe6 = new TCutG("bHe6",8);
+	bHe6->SetVarX("tof");
+	bHe6->SetVarY("aF5");
+	bHe6->SetTitle("Graph");
+	bHe6->SetFillStyle(1000);
+	bHe6->SetPoint(0,168.386,1124.68);
+	bHe6->SetPoint(1,179.558,1113.54);
+	bHe6->SetPoint(2,181.048,1074.52);
+	bHe6->SetPoint(3,180.841,784.713);
+	bHe6->SetPoint(4,178.256,673.248);
+	bHe6->SetPoint(5,174.085,617.516);
+	bHe6->SetPoint(6,168.046,623.089);
+	bHe6->SetPoint(7,168.386,1124.68);
+
+   TCutG *dtTT = new TCutG("dtTT",33);
+   dtTT->SetVarX("sqrtime");
+   dtTT->SetVarY("sqltime");
+   dtTT->SetTitle("Graph");
+   dtTT->SetFillStyle(1000);
+   dtTT->SetPoint(0,1163.5,1484.96);
+   dtTT->SetPoint(1,1110.24,1482.22);
+   dtTT->SetPoint(2,1082.34,1480.39);
+   dtTT->SetPoint(3,1070.92,1435.52);
+   dtTT->SetPoint(4,1084.24,1393.4);
+   dtTT->SetPoint(5,1077.9,1221.27);
+   dtTT->SetPoint(6,1067.75,1062.87);
+   dtTT->SetPoint(7,1150.18,1058.29);
+   dtTT->SetPoint(8,1169.2,1106.82);
+   dtTT->SetPoint(9,1108.33,1145.28);
+   dtTT->SetPoint(10,1093.12,1148.02);
+   dtTT->SetPoint(11,1088.04,1162.67);
+   dtTT->SetPoint(12,1082.34,1170.91);
+   dtTT->SetPoint(13,1100.09,1333.89);
+   dtTT->SetPoint(14,1158.42,1353.12);
+   dtTT->SetPoint(15,1424.73,1023.5);
+   dtTT->SetPoint(16,1542.66,1059.21);
+   dtTT->SetPoint(17,1557.25,1127.88);
+   dtTT->SetPoint(18,1536.96,1170.91);
+   dtTT->SetPoint(19,1441.85,1177.32);
+   dtTT->SetPoint(20,1410.78,1189.22);
+   dtTT->SetPoint(21,1411.41,1244.16);
+   dtTT->SetPoint(22,1386.05,1412.63);
+   dtTT->SetPoint(23,1396.2,1427.28);
+   dtTT->SetPoint(24,1434.87,1391.57);
+   dtTT->SetPoint(25,1482.43,1385.16);
+   dtTT->SetPoint(26,1523.01,1402.56);
+   dtTT->SetPoint(27,1553.44,1446.51);
+   dtTT->SetPoint(28,1552.17,1495.04);
+   dtTT->SetPoint(29,1459.6,1512.43);
+   dtTT->SetPoint(30,1269.38,1491.37);
+   dtTT->SetPoint(31,1175.54,1480.39);
+   dtTT->SetPoint(32,1163.5,1484.96);
+
+	//correct correlation between beam time stamp and SQLdE time stamp - 1
+   TCutG *dtLT1 = new TCutG("dtLT1",9);
+   dtLT1->SetVarX("(tdcF5[0]-sqltime)");
+   dtLT1->SetVarY("sqltime");
+   dtLT1->SetTitle("Graph");
+   dtLT1->SetFillStyle(1000);
+   dtLT1->SetPoint(0,1432.44,1484.04);
+   dtLT1->SetPoint(1,1408.72,1463.02);
+   dtLT1->SetPoint(2,1409.38,1406.53);
+   dtLT1->SetPoint(3,1472.64,1377.63);
+   dtLT1->SetPoint(4,1510.86,1409.16);
+   dtLT1->SetPoint(5,1515.47,1455.14);
+   dtLT1->SetPoint(6,1495.04,1491.92);
+   dtLT1->SetPoint(7,1438.37,1485.35);
+   dtLT1->SetPoint(8,1432.44,1484.04);
+
+   //correct correlation between beam time stamp and SQLdE time stamp - 2
+   TCutG *dtLT2 = new TCutG("dtLT2",9);
+   dtLT2->SetVarX("(tdcF5[0]-sqltime)");
+   dtLT2->SetVarY("sqltime");
+   dtLT2->SetTitle("Graph");
+   dtLT2->SetFillStyle(1000);
+   dtLT2->SetPoint(0,1797.51,1053.14);
+   dtLT2->SetPoint(1,1858.13,1054.46);
+   dtLT2->SetPoint(2,1862.09,1088.61);
+   dtLT2->SetPoint(3,1816.62,1152.99);
+   dtLT2->SetPoint(4,1759.29,1159.55);
+   dtLT2->SetPoint(5,1754.02,1129.34);
+   dtLT2->SetPoint(6,1753.36,1063.65);
+   dtLT2->SetPoint(7,1769.83,1040.01);
+   dtLT2->SetPoint(8,1797.51,1053.14);
+
+   //too low SQR energy for SQR angle
+   TCutG *dts1 = new TCutG("dts1",6);
+   dts1->SetVarX("sqrang");
+   dts1->SetVarY("sqrde+sqretot");
+   dts1->SetTitle("Graph");
+   dts1->SetFillStyle(1000);
+   dts1->SetPoint(0,2.16033,90.3238);
+   dts1->SetPoint(1,17.9438,60.5998);
+   dts1->SetPoint(2,19.3931,47.5955);
+   dts1->SetPoint(3,13.4828,37.3779);
+   dts1->SetPoint(4,2.68116,40.5361);
+   dts1->SetPoint(5,2.16033,90.3238);
+
+	//wrong time correlation between SQRdE and tdcF5 - 1
+   TCutG *dts2 = new TCutG("dts2",6);
+   dts2->SetVarX("(tdcF5[0]-sqrtime)");
+   dts2->SetVarY("sqrtime");
+   dts2->SetTitle("Graph");
+   dts2->SetFillStyle(1000);
+   dts2->SetPoint(0,1485.52,1479.75);
+   dts2->SetPoint(1,1425.45,1430.26);
+   dts2->SetPoint(2,1408.43,1404.86);
+   dts2->SetPoint(3,1437.46,1403.55);
+   dts2->SetPoint(4,1520.57,1461.79);
+   dts2->SetPoint(5,1485.52,1479.75);
+
+	//wrong time correlation between SQRdE and tdcF5 - 2
+   TCutG *dts3 = new TCutG("dts3",7);
+   dts3->SetVarX("(tdcF5[0]-sqrtime)");
+   dts3->SetVarY("sqrtime");
+   dts3->SetTitle("Graph");
+   dts3->SetFillStyle(1000);
+   dts3->SetPoint(0,1330,1485);
+   dts3->SetPoint(1,1398.75,1548.06);
+   dts3->SetPoint(2,1436.46,1547.18);
+   dts3->SetPoint(3,1420.11,1514.34);
+   dts3->SetPoint(4,1375.05,1481.06);
+   dts3->SetPoint(5,1332.33,1454.35);
+   dts3->SetPoint(6,1330,1485);
+
+	//too high energy for given SQL angle
+   TCutG *dts4 = new TCutG("dts4",9);
+   dts4->SetVarX("sqlang");
+   dts4->SetVarY("sqlde");
+   dts4->SetTitle("Graph");
+   dts4->SetFillStyle(1000);
+   dts4->SetPoint(0,49.2246,18.8599);
+   dts4->SetPoint(1,48.7174,13.3702);
+   dts4->SetPoint(2,47.9248,10.082);
+   dts4->SetPoint(3,44.5326,7.21178);
+   dts4->SetPoint(4,40.8868,6.2922);
+   dts4->SetPoint(5,34.1341,4.20223);
+   dts4->SetPoint(6,32.2953,5.34475);
+   dts4->SetPoint(7,33.5634,20.3089);
+   dts4->SetPoint(8,49.2246,18.8599);
+
+   TCutG *dehe4 = new TCutG("dehe4",21);
+   dehe4->SetVarX("sqretot");
+   dehe4->SetVarY("sqrde");
+   dehe4->SetTitle("Graph");
+   dehe4->SetFillStyle(1000);
+   dehe4->SetPoint(0,146.179,13.6094);
+   dehe4->SetPoint(1,122.719,15.9655);
+   dehe4->SetPoint(2,101.772,17.7607);
+   dehe4->SetPoint(3,70.7714,22.1364);
+   dehe4->SetPoint(4,41.167,29.2047);
+   dehe4->SetPoint(5,23.2926,35.2633);
+   dehe4->SetPoint(6,7.0939,43.1171);
+   dehe4->SetPoint(7,0.949575,49.2879);
+   dehe4->SetPoint(8,-4.35689,46.9318);
+   dehe4->SetPoint(9,5.13889,38.1804);
+   dehe4->SetPoint(10,25.5269,27.9706);
+   dehe4->SetPoint(11,48.987,21.351);
+   dehe4->SetPoint(12,62.6721,18.6583);
+   dehe4->SetPoint(13,81.6636,15.8534);
+   dehe4->SetPoint(14,98.9795,13.8338);
+   dehe4->SetPoint(15,121.602,11.8143);
+   dehe4->SetPoint(16,153.161,9.68255);
+   dehe4->SetPoint(17,194.496,8.56059);
+   dehe4->SetPoint(18,194.216,10.9167);
+   dehe4->SetPoint(19,151.765,13.2728);
+   dehe4->SetPoint(20,146.179,13.6094);
+
+
+
+	TFile dtCutFile("/home/zalewski/aku/analysis/dtCutFile.root", "RECREATE");
+	dtLEneLAng->Write();
+	dtLEneRAng->Write();
+	noProtDeut->Write();
+	bHe6->Write();
+	dtTT->Write();
+	dtLT1->Write();
+	dtLT2->Write();
+	dts1->Write();
+	dts2->Write();
+	dts3->Write();
+	dts4->Write();
+   dehe4->Write();
+
+	dtCutFile.Write();
+	dtCutFile.Close();
+
+	 return 5;
+}

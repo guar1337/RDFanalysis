@@ -107,7 +107,7 @@ Bool_t simplifier123::Process(Long64_t entry)
    ny1 = *NeEvent_ny1;
    nx2 = *NeEvent_nx2;
    ny2 = *NeEvent_ny2;
-	trigger = *NeEvent_trigger;
+   trigger = *NeEvent_trigger;
 
 	for (int iii = 0; iii < 4; iii++)
 	{

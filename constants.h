@@ -7,8 +7,8 @@
 namespace cs
 {
 	//*************************DETS DISPLACEMENT*******************************************
-	static const float		widthStripX	=	2.0;//1.8125;
-	static const float		widthStripY	=	4.0;//3.625;
+	static const float		widthStripX	=	1.8125;
+	static const float		widthStripY	=	3.625;
 
 	static const float		sqlXzero	=	widthStripX * 15.5;//28.09375;
 	static const float		sqlYzero	=	-widthStripY * 7.5;//-27.1875;
@@ -99,13 +99,13 @@ namespace cs
 	static const float		u_to_MeV	=	931.494028;
 
 	static const float		massN	= 1008664.91580 * u_to_MeV/1000000.0;
-	static const float 		mass1H 	= 1007825.03224 * u_to_MeV/1000000.0;
-	static const float 		mass2H 	= 2014101.77811 * u_to_MeV/1000000.0;
-	static const float 		mass3H 	= 3016049.28199 * u_to_MeV/1000000.0;
+	static const float 		mass1H 	= 938.272013;
+	static const float 		mass2H 	= 1875.613000;
+	static const float 		mass3H 	= 2808.921000;
 	static const float 		mass3He = 3016029.32265 * u_to_MeV/1000000.0;
-	static const float 		mass4He = 4002603.25413 * u_to_MeV/1000000.0;
-	static const float 		mass5He = 5012057 * u_to_MeV/1000000.0;
-	static const float 		mass6He = 6018885.89 * u_to_MeV/1000000.0;
+	static const float 		mass4He = 3727.379000;
+	static const float 		mass5He = 4667.679451;
+	static const float 		mass6He = 5605.534341;
 	static const float 		mass7He = 7027991 * u_to_MeV/1000000.0;
 	static const float 		mass7Li = 7016003.437 * u_to_MeV/1000000.0;
 	static const float 		mass8Li = 8022486.25 * u_to_MeV/1000000.0;
@@ -118,7 +118,7 @@ namespace cs
 	static const float		tofBase			=	12320.0;
 	static const float		dist_Tar_to_F5	=	-953.0;
 	static const float		dist_Tar_to_F6	=	478.0;
-	static const float		tof_const		=	87.8;
+	static const float		tof_const		=	89.165;
 	static const float		tof_const_5		=	68.475;
 
 
@@ -129,7 +129,6 @@ namespace cs
 	static const TString	dir_gcut("/home/zalewski/aku/wrk/GCuts/");
 
 	static const int		runNo = 30;
-	static const int		fileToProcess = 9;
 	static const TString	inDir = "raw";
 	static const bool 		fixedMWPC = false;
 	static const int		tarMass = 2;

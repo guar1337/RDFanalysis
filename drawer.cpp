@@ -1,44 +1,160 @@
-// Ceres Solver - A fast non-linear least squares minimizer
-// Copyright 2015 Google Inc. All rights reserved.
-// http://ceres-solver.org/
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//
-// * Redistributions of source code must retain the above copyright notice,
-//	 this list of conditions and the following disclaimer.
-// * Redistributions in binary form must reproduce the above copyright notice,
-//	 this list of conditions and the following disclaimer in the documentation
-//	 and/or other materials provided with the distribution.
-// * Neither the name of Google Inc. nor the names of its contributors may be
-//	 used to endorse or promote products derived from this software without
-//	 specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
+#include "/home/zalewski/aku/analysis/constants.h"
+#include "TProfile.h"
+#include "TVector3.h"
+#include "TLorentzVector.h"
+#include "TGraph.h"
+#include "TCanvas.h"
 
+Int_t varX, varZ;
 
-#include "helloworld.hxx"
-Int_t modifier = 10.0;
+std::string smallFile = "/home/zalewski/dataTmp/small/smallE.root";
+enum sPar {sLang1, sLang2, sLang3, sRang, sTarPos, sDistL, sDistR};
+std::vector<std::string> parNames = {"sLang1", "sLang2", "sLang3", "sRang", "sTarPos", "sDistL", "sDistR"};
+
+Double_t tarPos[3], leftAngle[3], tarAngle[3];
+Double_t sqlDist, sqrDist, varLDist, varRDist;
+Double_t rightAngle;
+Bool_t calculate;
+
+const Int_t numberOfParameters = 7;
+Double_t lowerParamBound[numberOfParameters], upperParamBound[numberOfParameters];
+Int_t firstRun, lastRun;
+
+Double_t getPPLang(Double_t m_thetaCM, TLorentzVector m_lvBeam)
+{
+	TLorentzVector m_lv6He(m_lvBeam);
+	TLorentzVector m_lv1H(0,0,0,cs::mass1H);
+	TLorentzVector m_lvCM = m_lv6He+m_lv1H;
+
+	TVector3 m_boostVect = m_lvCM.BoostVector();
+
+	//m_lv6He.Boost(-m_boostVect);
+	m_lv1H.Boost(-m_boostVect);
+
+	//m_lv6He.SetTheta(TMath::Pi()-m_thetaCM);
+	m_lv1H.SetTheta(m_thetaCM);
+
+	//m_lv6He.Boost(m_boostVect);
+	m_lv1H.Boost(m_boostVect);
+	Double_t m_sqlangpp = m_lvBeam.Angle(m_lv1H.Vect())*TMath::RadToDeg();
+	//Double_t m_sqrangpp = m_lvBeam.Angle(m_lv6He.Vect())*TMath::RadToDeg();
+	return m_sqlangpp;
+}
+
+Double_t getPPRang(Double_t m_thetaCM, TLorentzVector m_lvBeam)
+{
+	TLorentzVector m_lv6He(m_lvBeam);
+	TLorentzVector m_lv1H(0,0,0,cs::mass1H);
+	TLorentzVector m_lvCM = m_lv6He+m_lv1H;
+
+	TVector3 m_boostVect = m_lvCM.BoostVector();
+
+	m_lv6He.Boost(-m_boostVect);
+	//m_lv1H.Boost(-m_boostVect);
+
+	m_lv6He.SetTheta(TMath::Pi()-m_thetaCM);
+	//m_lv1H.SetTheta(m_thetaCM);
+
+	m_lv6He.Boost(m_boostVect);
+	//m_lv1H.Boost(m_boostVect);
+	//Double_t m_sqlangpp = m_lvBeam.Angle(m_lv1H.Vect())*TMath::RadToDeg();
+	Double_t m_sqrangpp = m_lvBeam.Angle(m_lv6He.Vect())*TMath::RadToDeg();
+	return m_sqrangpp;
+}
+
+Double_t getEnePP(Double_t m_thetaCM, TLorentzVector m_lvBeam)
+{
+	m_lvBeam.SetE(cs::mass6He+155.0);
+	TLorentzVector m_lv6He(m_lvBeam);
+	TLorentzVector m_lv1H(0,0,0,cs::mass1H);
+	TLorentzVector m_lvCM = m_lv6He+m_lv1H;
+	TVector3 m_boostVect = m_lvCM.BoostVector();
+
+	//m_lv6He.Boost(-m_boostVect);
+	m_lv1H.Boost(-m_boostVect);
+
+	//m_lv6He.SetTheta(TMath::Pi()-m_thetaCM);
+	m_lv1H.SetTheta(m_thetaCM);
+
+	//m_lv6He.Boost(m_boostVect);
+	m_lv1H.Boost(m_boostVect);
+	Double_t m_sqlEpp = m_lv1H.E()-m_lv1H.M();
+	//Double_t m_sqrangpp = m_lvBeam.Angle(m_lv6He.Vect())*TMath::RadToDeg();
+	return m_sqlEpp;
+}
+
+//d,d reaction
+Double_t getDDRang(Double_t m_thetaCM, TLorentzVector m_lvBeam)
+{
+	TLorentzVector m_lv6He(m_lvBeam);
+	TLorentzVector m_lv2H(0,0,0,cs::mass2H);
+	TLorentzVector m_lvCM = m_lv6He+m_lv2H;
+	TVector3 m_boostVect = m_lvCM.BoostVector();
+
+	m_lv6He.Boost(-m_boostVect);
+	//m_lv2H.Boost(-m_boostVect);
+
+	m_lv6He.SetTheta(TMath::Pi()-m_thetaCM);
+	//m_lv2H.SetTheta(m_thetaCM);
+
+	m_lv6He.Boost(m_boostVect);
+	//m_lv2H.Boost(m_boostVect);
+	//Double_t m_sqlangdd = m_lvBeam.Angle(m_lv2H.Vect())*TMath::RadToDeg();
+	Double_t m_sqrangdd = m_lvBeam.Angle(m_lv6He.Vect())*TMath::RadToDeg();
+	return m_sqrangdd;
+}
+
+Double_t getDDLang(Double_t m_thetaCM, TLorentzVector m_lvBeam)
+{
+	TLorentzVector m_lv6He(m_lvBeam);
+	TLorentzVector m_lv2H(0,0,0,cs::mass2H);
+	TLorentzVector m_lvCM = m_lv6He+m_lv2H;
+	TVector3 m_boostVect = m_lvCM.BoostVector();
+
+	//m_lv6He.Boost(-m_boostVect);
+	m_lv2H.Boost(-m_boostVect);
+
+	//m_lv6He.SetTheta(TMath::Pi()-m_thetaCM);
+	m_lv2H.SetTheta(m_thetaCM);
+
+	//m_lv6He.Boost(m_boostVect);
+	m_lv2H.Boost(m_boostVect);
+	Double_t m_sqlangdd = m_lvBeam.Angle(m_lv2H.Vect())*TMath::RadToDeg();
+	//Double_t m_sqrangdd = m_lvBeam.Angle(m_lv6He.Vect())*TMath::RadToDeg();
+	return m_sqlangdd;
+}
+
+Double_t getEneDD(Double_t m_thetaCM, TLorentzVector m_lvBeam)
+{
+	Double_t m_ene = 155.0 + cs::mass6He;
+	Double_t m_mom = sqrt(m_ene*m_ene - cs::mass6He*cs::mass6He);
+	TLorentzVector m_lv6He(0.0, 0.0, m_mom, m_ene);
+	TLorentzVector m_lv2H(0,0,0,cs::mass2H);
+	TLorentzVector m_lvCM = m_lv6He+m_lv2H;
+	TVector3 m_boostVect = m_lvCM.BoostVector();
+
+	//m_lv6He.Boost(-m_boostVect);
+	m_lv2H.Boost(-m_boostVect);
+
+	//m_lv6He.SetTheta(TMath::Pi()-m_thetaCM);
+	m_lv2H.SetTheta(m_thetaCM);
+
+	//m_lv6He.Boost(m_boostVect);
+	m_lv2H.Boost(m_boostVect);
+	Double_t m_sqlEdd = m_lv2H.E()-m_lv2H.M();
+	//Double_t m_sqrangdd = m_lvBeam.Angle(m_lv6He.Vect())*TMath::RadToDeg();
+	return m_sqlEdd;
+}
 
 std::vector<Double_t> getMWPC(Double_t m_MWPC_1_X, Double_t m_MWPC_1_Y, Double_t m_MWPC_1_Z, Double_t m_MWPC_2_X, Double_t m_MWPC_2_Y, Double_t m_MWPC_2_Z)
 {
 	std::vector<Double_t> rvecMWPC(6);
-	rvecMWPC.at(0) = m_MWPC_1_X - 1.0;
-	rvecMWPC.at(1) = m_MWPC_1_Y - 2.1375;
-	rvecMWPC.at(2) = m_MWPC_1_Z;
-	rvecMWPC.at(3) = m_MWPC_2_X + 0.2; 
-	rvecMWPC.at(4) = m_MWPC_2_Y - 1.125;
-	rvecMWPC.at(5) = m_MWPC_2_Z;
+	rvecMWPC.at(0) = 0.0 + m_MWPC_1_X - 1.0;
+	rvecMWPC.at(1) = 0.0 + m_MWPC_1_Y - 2.1375;
+	rvecMWPC.at(2) = 0.0 + m_MWPC_1_Z;
+	rvecMWPC.at(3) = 0.0 + m_MWPC_2_X + 0.2; 
+	rvecMWPC.at(4) = 0.0 + m_MWPC_2_Y - 1.125;
+	rvecMWPC.at(5) = 0.0 + m_MWPC_2_Z;
 
 	return rvecMWPC;
 }
@@ -61,17 +177,17 @@ TVector3 getTarVertex(std::vector<Double_t> rvecMWPC, Int_t m_geo, const Double_
 	{
 	case 1:
 		m_tarAngle = 45.0*TMath::DegToRad();
-		m_tarPos = 0.0;//m_pars[sTarPos];
+		m_tarPos = tarPos[0];
 		break;
 
 	case 2:
 		m_tarAngle = 6.0*TMath::DegToRad();
-		m_tarPos = 0.0;//m_pars[sTarPos] + 2.0;
+		m_tarPos = tarPos[1];
 		break;
 
 	case 3:
 		m_tarAngle = 0.0*TMath::DegToRad();
-		m_tarPos = 0.0;//m_pars[sTarPos]+ 2.0;
+		m_tarPos = tarPos[2];
 		break;
 	
 	default:
@@ -101,9 +217,9 @@ TVector3 getLeftDetVertex(Int_t m_xStrip, Int_t m_yStrip, Int_t m_geo)
 	Double_t yStrip = m_yStrip + (gRandom->Uniform(0.0,1.0)-0.5);
 
 	// coordinates of hit in LAB system	
-	Double_t X2hDet = -cs::widthStripX * m_xStrip * cos(leftAngle[m_geo-1]);
-	Double_t Y2hDet = cs::widthStripY * m_yStrip;
-	Double_t Z2hDet = cs::widthStripX * m_xStrip * sin(leftAngle[m_geo-1]);
+	Double_t X2hDet = -cs::widthStripX * xStrip * cos(leftAngle[m_geo-1]);
+	Double_t Y2hDet = cs::widthStripY * yStrip;
+	Double_t Z2hDet = cs::widthStripX * xStrip * sin(leftAngle[m_geo-1]);
 	return TVector3(X2hDet, Y2hDet, Z2hDet);
 }
 
@@ -113,25 +229,29 @@ TVector3 getRightDetVertex(Int_t m_xStrip, Int_t m_yStrip, Int_t m_geo)
 	Double_t yStrip = m_yStrip + (gRandom->Uniform(0.0,1.0)-0.5);
 
 	// coordinates of hit in LAB system
-	Double_t X6HeDet = cs::widthStripX * m_xStrip * cos(rightAngle);
-	Double_t Y6HeDet = cs::widthStripY * m_yStrip;
-	Double_t Z6HeDet = cs::widthStripX * m_xStrip * sin(rightAngle);
+	Double_t X6HeDet = cs::widthStripX * xStrip * cos(rightAngle);
+	Double_t Y6HeDet = cs::widthStripY * yStrip;
+	Double_t Z6HeDet = cs::widthStripX * xStrip * sin(rightAngle);
 	return TVector3(X6HeDet, Y6HeDet, Z6HeDet);
 }
 
 TVector3 getLeftDetPosition(Int_t m_geo, const Double_t *m_pars)
 {
+
 	Double_t X2Hlab = sqlDist*sin(leftAngle[m_geo-1]) + (cs::sqlXzero) * cos(leftAngle[m_geo-1]);
 	Double_t Y2Hlab = cs::sqlYstart + cs::widthStripY;
 	Double_t Z2Hlab = sqlDist*cos(leftAngle[m_geo-1]) - (cs::sqlXzero) * sin(leftAngle[m_geo-1]);
+
 	return TVector3(X2Hlab, Y2Hlab, Z2Hlab);
 }
 
 TVector3 getRightDetPosition(Int_t m_geo, const Double_t *m_pars)
 {
+
 	Double_t X6Helab = sqrDist*sin(-rightAngle) - (cs::sqlXzero) * cos(rightAngle);
 	Double_t Y6Helab = cs::sqrYstart + cs::widthStripY;
 	Double_t Z6Helab = sqrDist*cos(rightAngle) - (cs::sqlXzero) * sin(rightAngle);
+
 	return TVector3(X6Helab, Y6Helab, Z6Helab);
 }
 
@@ -163,7 +283,7 @@ Double_t myAngAngFit(Double_t m_leftAngle, TLorentzVector m_lvBeam, Double_t tar
 
 Double_t drawPT_3H(Double_t m_thetaCM)
 {
-	Double_t beamEne = cs::mass6He + 160.0;
+	Double_t beamEne = cs::mass6He + 155.0;
 	Double_t beamMom = sqrt(beamEne*beamEne - cs::mass6He*cs::mass6He);
 	TLorentzVector m_lv6He(0.0, 0.0, beamMom, beamEne);
 	TLorentzVector m_lv1H(0.0,0.0,0,cs::mass1H);
@@ -175,11 +295,11 @@ Double_t drawPT_3H(Double_t m_thetaCM)
 	Double_t m_Ecm = m_lv1H.E() + m_lv6He.E();
 	Double_t m_finTcm = m_Ecm - (cs::mass6He + cs::mass1H) + cs::Qpt;
 
-	Double_t m_cm3HkinE = m_finTcm*(m_finTcm+2*cs::mass4He)/(2.0*m_Ecm);
+	Double_t m_cm3HkinE = m_finTcm*(m_finTcm+2.0*cs::mass4He)/(2.0*m_Ecm);
 	Double_t m_cm3Hene = m_cm3HkinE + cs::mass3H;
 	Double_t m_cm3Hmom = sqrt(m_cm3Hene*m_cm3Hene - cs::mass3H*cs::mass3H);
 
-	Double_t m_cm4HekinE = m_finTcm*(m_finTcm+2*cs::mass3H)/(2.0*m_Ecm);
+	Double_t m_cm4HekinE = m_finTcm*(m_finTcm+2.0*cs::mass3H)/(2.0*m_Ecm);
 	Double_t m_cm4Heene = m_cm4HekinE + cs::mass4He;
 	Double_t m_cm4Hemom = sqrt(m_cm4Heene*m_cm4Heene - cs::mass4He*cs::mass4He);
 
@@ -196,7 +316,7 @@ Double_t drawPT_3H(Double_t m_thetaCM)
 
 Double_t drawPT_4He(Double_t m_thetaCM)
 {
-	Double_t beamEne = cs::mass6He + 160.0;
+	Double_t beamEne = cs::mass6He + 155.0;
 	Double_t beamMom = sqrt(beamEne*beamEne - cs::mass6He*cs::mass6He);
 	TLorentzVector m_lv6He(0.0, 0.0, beamMom, beamEne);
 	TLorentzVector m_lv1H(0.0,0.0,0,cs::mass1H);
@@ -299,141 +419,43 @@ Double_t recoPT(Double_t m_sqlang, TLorentzVector m_lvBeam, Int_t m_lang)
 	return m_myAngle*TMath::RadToDeg();
 }
 
-struct CostFunctor
+void drawer(int input1 = 0, int input2 = 0)
 {
-	bool operator()(const double *par, double *residual) const
-	{
-/*		#3 different datasets:
-		#pp, dd, pt
-		#same pool of par: 3x target shift, 4x2 MWPC, 1+3x angle, 2x dist, 2x det shift
-		create column (obtained-Expected)**2 value for each dataset - i.e. sqrang, esqrang(sqlang, vBeam)
-		calcualte Chi2 - Sum("newCol")
-*/
-		Double_t tarMass1H = cs::mass1H;
-		Double_t tarMass2H = cs::mass2H;
 
-		
-		tarPos[0] = 0.0;//par[sTarPos];
-		tarPos[1] = 0.0;//par[sTarPos] + 2.0;
-		tarPos[2] = 0.0;//par[sTarPos] + 2.0;
-		tarAngle[0] = 45.0 * TMath::DegToRad();
-		tarAngle[1] = 6.0 * TMath::DegToRad();
-		tarAngle[2] = 0.0 * TMath::DegToRad();
+	varX = input1;
+	varZ = input2;
+	Double_t finalPars[7];
+	finalPars[sLang1] = 0.3;
+	finalPars[sLang2] = 0.0;
+	finalPars[sLang3] = 0.0;
+	finalPars[sRang] = -1.0;
+	finalPars[sTarPos] = 10.0;
+	finalPars[sDistL] = -20.0;
+	finalPars[sDistR] = -30.0;
 
-		leftAngle[0] = (65.0/* + par[sLang1]*/) * TMath::DegToRad();
-		leftAngle[1] = (50.0/* + par[sLang2]*/) * TMath::DegToRad();
-		leftAngle[2] = (35.0/* + par[sLang3]*/) * TMath::DegToRad();
-		rightAngle = (15.0/* + par[sRang]*/) * TMath::DegToRad();
-
-		sqlDist = 170.0 + par[sDistL];
-		sqrDist = 250.0 + par[sDistR];
-
-		ROOT::RDataFrame smallDF("small", smallFile);
-
-		auto newDF = smallDF.Define("X1",[&par](Double_t MWPC_1_X){return (MWPC_1_X);}, {"MWPC_1_X"})
-									.Define("Y1",[&par](Double_t MWPC_1_Y){return (MWPC_1_Y);}, {"MWPC_1_Y"})
-									.Define("Z1",[&par](){return -816.0;})
-									.Define("X2",[&par](Double_t MWPC_2_X){return (MWPC_2_X);}, {"MWPC_2_X"})
-									.Define("Y2",[&par](Double_t MWPC_2_Y){return (MWPC_2_Y);}, {"MWPC_2_Y"})
-									.Define("Z2",[&par](){return -270.0;})
-									.Define("MWPC", getMWPC, {"X1", "Y1", "Z1", "X2", "Y2", "Z2"})
-				.Define("vBeam", getBeamVector, {"MWPC", "kinE"})
-				.Define("lvBeam", [](TVector3 vBeam, Double_t kinE){return TLorentzVector(vBeam,cs::mass6He+kinE);}, {"vBeam", "kinE"})
-				.Define("tarVertex", [par](std::vector<Double_t> rvecMWPC, Int_t geo){return getTarVertex(rvecMWPC, geo, par);}, {"MWPC", "geo"})
-
-				.Define("leftDetVertex", getLeftDetVertex, {"SQX_L_strip", "SQY_L_strip", "geo"})
-				.Define("leftLabVertex", [par](Int_t geo){return getLeftDetPosition(geo, par);}, {"geo"})
-				.Define("leftGlobVertex", [](TVector3 leftDetVertex, TVector3 leftLabVertex){return TVector3(leftDetVertex+leftLabVertex);}, {"leftDetVertex", "leftLabVertex"})
-				.Define("rightDetVertex", getRightDetVertex, {"SQX_R_strip", "SQY_R_strip", "geo"})
-				.Define("rightLabVertex", [par](Int_t geo){return getRightDetPosition(geo, par);}, {"geo"})
-				.Define("rightGlobVertex", [](TVector3 rightDetVertex, TVector3 rightLabVertex){return TVector3(rightDetVertex+rightLabVertex);}, {"rightDetVertex", "rightLabVertex"})
-
-				.Define("v2H", [](TVector3 leftGlobVertex, TVector3 tarVertex){return TVector3(leftGlobVertex-tarVertex);}, {"leftGlobVertex", "tarVertex"})
-				.Define("v6He", [](TVector3 rightGlobVertex, TVector3 tarVertex){return TVector3(rightGlobVertex-tarVertex);}, {"rightGlobVertex", "tarVertex"})
-				.Define("sqlang", [](TVector3 v2H, TVector3 vBeam){return v2H.Angle(vBeam)*TMath::RadToDeg();}, {"v2H", "vBeam"})
-				.Define("sqrang", [](TVector3 v6He, TVector3 vBeam){return v6He.Angle(vBeam)*TMath::RadToDeg();}, {"v6He", "vBeam"});
-
-
-		auto ppDF = newDF.Filter("pp").Cache<Double_t, Double_t, TLorentzVector>({"sqlang", "sqrang", "lvBeam"});
-		auto ddDF = newDF.Filter("dd").Cache<Double_t, Double_t, TLorentzVector>({"sqlang", "sqrang", "lvBeam"});
-		auto ptDF = newDF.Filter("pt").Cache<Double_t, Double_t, TLorentzVector, Int_t>({"sqlang", "sqrang", "lvBeam", "partPT"});
-		auto ptDFLeft = newDF.Filter("pt && partPT==1").Cache<Double_t, Double_t, TLorentzVector, Int_t>({"sqlang", "sqrang", "lvBeam", "partPT"});
-		auto ptDFRight = newDF.Filter("pt && partPT==0").Cache<Double_t, Double_t, TLorentzVector, Int_t>({"sqlang", "sqrang", "lvBeam", "partPT"});
-
-		// for pp and dd sqlang describes the ang-ang relation. For the pr reaction I might have to divide the data into two ranges
-		auto nEventsPP = ppDF.Count().GetValue()/(1000);
-		auto sumPP = ppDF.Define("resqrang",[tarMass1H](Double_t sqlang, TLorentzVector lvBeam){return myAngAngFit(sqlang, lvBeam, tarMass1H);}, {"sqlang", "lvBeam"})
-							.Define("difSqrang","pow(resqrang-sqrang,2)")
-							.Sum<double>("difSqrang");
-
-		auto nEventsDD = ddDF.Count().GetValue()/(1000);
-		auto sumDD = ddDF.Define("resqrang",[tarMass2H](Double_t sqlang, TLorentzVector lvBeam){return myAngAngFit(sqlang, lvBeam, tarMass2H);}, {"sqlang", "lvBeam"})
-							.Define("difSqrang","pow(resqrang-sqrang,2)")
-							.Sum<double>("difSqrang");
-
-		auto nEventsPT = ptDF.Count().GetValue();
-		auto sumPT = ptDF.Define("resqrang", recoPT, {"sqlang", "lvBeam", "partPT"})
-							.Define("difSqrang","resqrang-sqrang")
-							.Define("difSqrang2", "pow(resqrang-sqrang,2)");
-
-		auto nEventsPTLang = ptDFLeft.Count().GetValue()/(1000);
-		auto sumPTLang = ptDFLeft.Define("resqrang", recoPT, {"sqlang", "lvBeam", "partPT"})
-										.Define("difSqrang", "pow(resqrang-sqrang,2)")
-										.Define("normDifSqrang", "(difSqrang>0) ? difSqrang : 300")
-										.Sum<double>("normDifSqrang");
-
-		auto nEventsPTRang = ptDFRight.Count().GetValue()/(1000);
-		auto sumPTRight = ptDFRight.Define("resqlang", recoPT, {"sqrang", "lvBeam", "partPT"})
-											.Define("difSqlang", "pow(resqlang-sqrang,2)")
-											.Define("normDifSqlang", "(difSqlang>0) ? difSqlang : 300")
-											.Sum<double>("normDifSqlang");
-
-		Double_t normChi2PP = sumPP.GetValue()/nEventsPP;
-		Double_t normChi2DD = sumDD.GetValue()/nEventsDD;
-		Double_t normChi2PTLeft = sumPTLang.GetValue();
-		Double_t normChi2PTRight = sumPTRight.GetValue()/1000.0;
-
-		//printf("chi2PP: %f\tchi2DD: %f\tchi2PTLeft: %f\tchi2PTRight: %f\n", normChi2PP, normChi2DD, normChi2PTLeft, normChi2PTRight);
-
-		residual[0] = normChi2PP;
-		residual[1] = normChi2DD;
-		residual[2] = normChi2PTRight;
-		residual[3] = normChi2PTLeft;
-		//normChi2PTLeft
-		return true;
-	}
-};
-
-void drawResults(double *finalPars, int myRunNumber = 0)
-{
-/*	
-	#3 different datasets:
-	#pp, dd, pt
-	#same pool of par: 3x target shift, 4x2 MWPC, 1+3x angle, 2x dist, 2x det shift
-	create column (obtained-Expected)**2 value for each dataset - i.e. sqrang, esqrang(sqlang, vBeam)
-	calcualte Chi2 - Sum("newCol")
-*/
+	varLDist = 0.0;
+	varRDist = 0.0;
 
 	Double_t tarMass1H = cs::mass1H;
 	Double_t tarMass2H = cs::mass2H;
 
-	tarPos[0] = 0.0;//finalPars[sTarPos];
-	tarPos[1] = 0.0;//finalPars[sTarPos] + 2.0;
-	tarPos[2] = 0.0;//finalPars[sTarPos] + 2.0;
+	tarPos[0] = finalPars[sTarPos];
+	tarPos[1] = finalPars[sTarPos];
+	tarPos[2] = finalPars[sTarPos];
 
 	tarAngle[0] = 45.0 * TMath::DegToRad();
 	tarAngle[1] = 6.0 * TMath::DegToRad();
 	tarAngle[2] = 0.0 * TMath::DegToRad();
 
-	leftAngle[0] = (65.0/* + finalPars[sLang1]*/) * TMath::DegToRad();
-	leftAngle[1] = (50.0/* + finalPars[sLang2]*/) * TMath::DegToRad();
-	leftAngle[2] = (35.0/* + finalPars[sLang3]*/) * TMath::DegToRad();
-	rightAngle = (15.0/* + finalPars[sRang]*/) * TMath::DegToRad();
+	leftAngle[0] = (65.0 + finalPars[sLang1]) * TMath::DegToRad();
+	leftAngle[1] = (50.0 + finalPars[sLang2]) * TMath::DegToRad();
+	leftAngle[2] = (35.0 + finalPars[sLang3]) * TMath::DegToRad();
+	rightAngle = (15.0 + finalPars[sRang]) * TMath::DegToRad();
 
 	sqlDist = 170.0 + finalPars[sDistL];
 	sqrDist = 250.0 + finalPars[sDistR];
 	ROOT::EnableImplicitMT();
-	ROOT::RDataFrame smallDF("small", smallFile);
+	ROOT::RDataFrame smallDF("smallReal", smallFile);
 
 		auto newDF = smallDF.Define("X1",[&finalPars](Double_t MWPC_1_X){return (MWPC_1_X);}, {"MWPC_1_X"})
 									.Define("Y1",[&finalPars](Double_t MWPC_1_Y){return (MWPC_1_Y);}, {"MWPC_1_Y"})
@@ -459,11 +481,12 @@ void drawResults(double *finalPars, int myRunNumber = 0)
 							.Define("sqrang", [](TVector3 v6He, TVector3 vBeam){return v6He.Angle(vBeam)*TMath::RadToDeg();}, {"v6He", "vBeam"});
 
 
-	auto ppDF = newDF.Filter("pp").Cache<Double_t, Double_t, TLorentzVector, Int_t>({"sqlang", "sqrang", "lvBeam", "geo"});
-	auto ddDF = newDF.Filter("dd").Cache<Double_t, Double_t, TLorentzVector, Int_t>({"sqlang", "sqrang", "lvBeam", "geo"});
+	auto ppDF = newDF.Filter("pp").Cache<Double_t, Double_t, TLorentzVector, Int_t, Double_t>({"sqlang", "sqrang", "lvBeam", "geo", "resqlde1"});
+	auto ddDF = newDF.Filter("dd").Cache<Double_t, Double_t, TLorentzVector, Int_t, Double_t>({"sqlang", "sqrang", "lvBeam", "geo", "resqlde2"});
 	auto ptDF = newDF.Filter("pt").Cache<Double_t, Double_t, TLorentzVector, Int_t>({"sqlang", "sqrang", "lvBeam", "partPT"});
 	auto ptDFLeft = newDF.Filter("pt && partPT==1").Cache<Double_t, Double_t, TLorentzVector, Int_t>({"sqlang", "sqrang", "lvBeam", "partPT"});
 	auto ptDFRight = newDF.Filter("pt && partPT==0").Cache<Double_t, Double_t, TLorentzVector, Int_t>({"sqlang", "sqrang", "lvBeam", "partPT"});
+	auto vecDF = newDF.Cache<TVector3, TVector3, TVector3, TVector3, TVector3, TVector3, TVector3>({"leftDetVertex", "leftLabVertex", "leftGlobVertex", "rightDetVertex", "rightLabVertex", "rightGlobVertex", "tarVertex"});
 
 	auto nEventsPP = ppDF.Count().GetValue();
 	auto sumPP = ppDF.Define("resqrang",[tarMass1H](Double_t sqlang, TLorentzVector lvBeam){return myAngAngFit(sqlang, lvBeam, tarMass1H);}, {"sqlang", "lvBeam"})
@@ -489,14 +512,42 @@ void drawResults(double *finalPars, int myRunNumber = 0)
 										.Define("difSqlang", "pow(resqlang-sqrang,2)");
 
 	TGraph ppAngAng = sumPP.Graph<Double_t, Double_t>("sqlang", "sqrang").GetValue();
+	TGraph ppAngAng_geo1 = sumPP.Filter("geo==1").Graph<Double_t, Double_t>("sqlang", "sqrang").GetValue();
+	TGraph ppAngAng_geo3 = sumPP.Filter("geo==3").Graph<Double_t, Double_t>("sqlang", "sqrang").GetValue();
+	TGraph ppAngE = sumPP.Filter("geo==1").Graph<Double_t, Double_t>("sqlang", "resqlde1").GetValue();
+
 	TGraph ddAngAng = sumDD.Graph<Double_t, Double_t>("sqlang", "sqrang").GetValue();
+	TGraph ddAngAng_geo1 = sumDD.Filter("geo==1").Graph<Double_t, Double_t>("sqlang", "sqrang").GetValue();
+	TGraph ddAngAng_geo3 = sumDD.Filter("geo==3").Graph<Double_t, Double_t>("sqlang", "sqrang").GetValue();
+	TGraph ddAngE = sumDD.Filter("geo==1").Graph<Double_t, Double_t>("sqlang", "resqlde2").GetValue();
+
 	TGraph ptAngAngLeft = sumPTLang.Graph<Double_t, Double_t>("sqlang", "sqrang").GetValue();
 	TGraph ptAngAngRight = sumPTRight.Graph<Double_t, Double_t>("sqlang", "sqrang").GetValue();
 	
-	TGraph fppAngAng = sumPP.Graph<Double_t, Double_t>("sqlang", "resqrang").GetValue();
-	TGraph fddAngAng = sumDD.Graph<Double_t, Double_t>("sqlang", "resqrang").GetValue();
+	//TGraph fppAngAng = sumPP.Graph<Double_t, Double_t>("sqlang", "resqrang").GetValue();
+	//TGraph fddAngAng = sumDD.Graph<Double_t, Double_t>("sqlang", "resqrang").GetValue();
 	TGraph fptAngAngLeft = sumPTLang.Graph<Double_t, Double_t>("sqlang", "resqrang").GetValue();
 	TGraph fptAngAngRight = sumPTRight.Graph<Double_t, Double_t>("resqlang", "sqrang").GetValue();
+
+	auto lDF = vecDF.Define("lX", "leftGlobVertex.X()")
+					.Define("lDetX", "leftLabVertex.X()")
+					.Define("lZ", "leftGlobVertex.Z()")
+					.Define("lDetZ", "leftLabVertex.Z()");
+	
+	auto rDF = vecDF.Define("rX", "rightGlobVertex.X()")
+					.Define("rDetX", "rightLabVertex.X()")
+					.Define("rZ", "rightGlobVertex.Z()")
+					.Define("rDetZ", "rightLabVertex.Z()");
+
+	auto tarDF = vecDF.Define("tarX", "tarVertex.X()")
+					  .Define("tarZ", "tarVertex.Z()");
+	
+
+	TGraph setupL = lDF.Graph<Double_t, Double_t>("lX", "lZ").GetValue();
+	TGraph detL = lDF.Graph<Double_t, Double_t>("lDetX", "lDetZ").GetValue();
+	TGraph setupR = rDF.Graph<Double_t, Double_t>("rX", "rZ").GetValue();
+	TGraph detR = rDF.Graph<Double_t, Double_t>("rDetX", "rDetZ").GetValue();
+	TGraph setupTar = tarDF.Graph<Double_t, Double_t>("tarX", "tarZ").GetValue();
 
 	TProfile difPPSqrang1 = sumPP.Filter("geo==1").Profile1D<Double_t, Double_t>({"difPPSqrang", "difPPSqrang", 45, 25, 85}, "sqlang", "difSqrang").GetValue();
 	TProfile difPPSqrang2 = sumPP.Filter("geo==2").Profile1D<Double_t, Double_t>({"difPPSqrang", "difPPSqrang", 45, 25, 85}, "sqlang", "difSqrang").GetValue();
@@ -508,29 +559,60 @@ void drawResults(double *finalPars, int myRunNumber = 0)
 
 	TProfile difPTSqrang = sumPT.Profile1D<Double_t, Double_t>({"difPTSqrang", "difPTSqrang", 45, 25, 85}, "sqlang", "difSqrang").GetValue();
 
-	std::vector<Double_t> tmpVector3HAngle;
-	std::vector<Double_t> tmpVector4HeAngle;
+	std::vector<Double_t> vAng3H;
+	std::vector<Double_t> vAng4He;
+	std::vector<Double_t> vAngPP_1H;
+	std::vector<Double_t> vAngPP_6He;
+	std::vector<Double_t> vEPP_1H;
+	std::vector<Double_t> vAngDD_2H;
+	std::vector<Double_t> vAngDD_6He;
+	std::vector<Double_t> vEDD_2H;
+
+	Double_t beamEneTmp = cs::mass6He + 160.0;
+	Double_t beamMomTmp = sqrt(beamEneTmp*beamEneTmp - cs::mass6He*cs::mass6He);
+	TLorentzVector lvBeamTmp(0.0, 0.0, beamMomTmp, beamEneTmp);
 
 	for (int iii = 0; iii < 5000; iii++)
 	{
-		Double_t tmpThetaCM = gRandom->Uniform(0.0,180.0);
-		tmpVector3HAngle.push_back(drawPT_3H(tmpThetaCM));
-		tmpVector4HeAngle.push_back(drawPT_4He(tmpThetaCM));
+		Double_t thetaCM = gRandom->Uniform(0.0,TMath::Pi());
+		vAng3H.push_back(drawPT_3H(thetaCM));
+		vAng4He.push_back(drawPT_4He(thetaCM));
+
+		vAngPP_1H.push_back(getPPLang(thetaCM,lvBeamTmp));
+		vAngPP_6He.push_back(getPPRang(thetaCM,lvBeamTmp));
+		vEPP_1H.push_back(getEnePP(thetaCM,lvBeamTmp));
+
+		vAngDD_2H.push_back(getDDLang(thetaCM,lvBeamTmp));
+		vAngDD_6He.push_back(getDDRang(thetaCM,lvBeamTmp));
+		vEDD_2H.push_back(getEneDD(thetaCM,lvBeamTmp));
 	}
 	
-	TGraph ptAngAng(tmpVector3HAngle.size(), &tmpVector3HAngle[0], &tmpVector4HeAngle[0]);
+	TGraph ptAngAng(vAng3H.size(), &vAng3H[0], &vAng4He[0]);
+	TGraph fppAngAng(vAngPP_1H.size(), &vAngPP_1H[0], &vAngPP_6He[0]);
+	TGraph fddAngAng(vAngDD_2H.size(), &vAngDD_2H[0], &vAngDD_6He[0]);
+	TGraph fppAngE(vAngPP_1H.size(), &vAngPP_1H[0], &vEPP_1H[0]);
+	TGraph fddAngE(vAngDD_2H.size(), &vAngDD_2H[0], &vEDD_2H[0]);
 
-	TCanvas myCanvas("myCanvas", "Minimize results", 1200, 800);
+
+
+	TCanvas myCanvas("myCanvas", "Minimize results", 1920, 1080);
+	//myCanvas.SetBatch();
 	myCanvas.Divide(2,2);
 
 	myCanvas.cd(1);
 	ppAngAng.GetXaxis()->SetLimits(25.0, 80.0);
-	ppAngAng.GetYaxis()->SetRangeUser(0.0, 15.0);
-	ppAngAng.GetXaxis()->SetTitle("Angle of {}^{6}He [LAB deg]");
-	ppAngAng.GetYaxis()->SetTitle("Angle of {}^{1}H [LAB deg]");
+	ppAngAng.GetYaxis()->SetRangeUser(3.0, 22.0);
+	ppAngAng.GetXaxis()->SetTitle("Angle of {}^{1}H [LAB deg]");
+	ppAngAng.GetYaxis()->SetTitle("Angle of {}^{6}He [LAB deg]");
 	ppAngAng.SetTitle("Angle-angle relation for elastic scattering");
+	ppAngAng.SetMarkerColor(kRed);
 	ppAngAng.Draw("AP");
-	fppAngAng.SetMarkerColor(kRed);
+	ppAngAng_geo1.SetMarkerColor(kBlue);
+	ppAngAng_geo1.SetMarkerStyle(7);
+	ppAngAng_geo1.Draw("P,same");
+	ppAngAng_geo3.SetMarkerColor(kBlue);
+	ppAngAng_geo3.Draw("P,same");
+	fppAngAng.SetMarkerStyle(7);
 	fppAngAng.Draw("P,same");
 
 /*
@@ -540,14 +622,41 @@ void drawResults(double *finalPars, int myRunNumber = 0)
 	TLatex *tex2 = new TLatex(39.47308,20.15142,"Elastic scattering on deuterons");
    tex2->SetLineWidth(2);
    tex2->Draw("same");
-*/
+
 
 	myCanvas.cd(2);
 	ddAngAng.GetXaxis()->SetLimits(30.0, 85.0);
 	ddAngAng.GetYaxis()->SetRangeUser(0.0, 25.0);
-	ddAngAng.Draw("AP");
-	fddAngAng.SetMarkerColor(kRed);
+	ddAngAng.GetXaxis()->SetTitle("Angle of {}^{1}H [LAB deg]");
+	ddAngAng.GetYaxis()->SetTitle("Angle of {}^{6}He [LAB deg]");
+	ddAngAng.SetTitle("Angle-angle relation for elastic scattering");*/
+	ddAngAng.SetMarkerColor(kRed);
+	ddAngAng.Draw("P,same");
+	ddAngAng_geo1.SetMarkerStyle(7);
+	ddAngAng_geo1.SetMarkerColor(kBlue);
+	ddAngAng_geo1.Draw("P,same");
+	ddAngAng_geo3.SetMarkerStyle(7);
+	ddAngAng_geo3.SetMarkerColor(kBlue);
+	ddAngAng_geo3.Draw("P,same");
+	//fddAngAng.SetMarkerColor(kRed);
+	//fddAngAng.SetMarkerStyle(7);
 	fddAngAng.Draw("P,same");
+
+	myCanvas.cd(2);
+	ppAngE.GetXaxis()->SetLimits(60.0, 80.0);
+	ppAngE.GetYaxis()->SetRangeUser(0.0, 20.0);
+	ppAngE.SetMarkerColor(kRed);
+	ppAngE.SetMarkerStyle(53);	
+	ppAngE.Draw("AP");
+
+	ddAngE.SetMarkerStyle(53);
+	ddAngE.SetMarkerColor(kRed);
+	ddAngE.Draw("P, same");
+
+	fppAngE.SetMarkerStyle(7);
+	fddAngE.SetMarkerStyle(7);
+	fppAngE.Draw("P, same");
+	fddAngE.Draw("P, same");
 
 	myCanvas.cd(3);
 	ptAngAngLeft.GetXaxis()->SetLimits(5.0, 45.0);
@@ -562,164 +671,69 @@ void drawResults(double *finalPars, int myRunNumber = 0)
 	ptAngAng.Draw("P,same");
 
 	myCanvas.cd(4);
+	setupL.GetXaxis()->SetLimits(-100.0, 200.0);
+	setupL.GetYaxis()->SetRangeUser(-50.0, 300.0);
+	setupL.Draw("AP");
+	detL.SetMarkerStyle(53);
+	detL.SetMarkerSize(2);
+	detL.SetMarkerColor(kRed);
+	detR.SetMarkerStyle(53);
+	detR.SetMarkerSize(2);
+	detR.SetMarkerColor(kRed);
+
+	setupR.Draw("P,same");
+	setupTar.Draw("P,same");
+	detL.Draw("P,same");
+	detR.Draw("P,same");
+
+
+
+
+/*
 	difPPSqrang1.GetXaxis()->SetLimits(25.0, 85.0);
 	difPPSqrang1.GetYaxis()->SetRangeUser(-3.0, 3.0);
 	difPPSqrang1.SetMarkerStyle(53);
-	difPPSqrang1.SetMarkerSize(1);
+	difPPSqrang1.SetMarkerSize(2);
 	difPPSqrang1.SetMarkerColor(kRed);
 	difPPSqrang1.Draw("P");
 
-	difPPSqrang2.SetMarkerStyle(54);
-	difPPSqrang2.SetMarkerSize(1);
-	difPPSqrang2.SetMarkerColor(kRed);
+	difPPSqrang2.GetXaxis()->SetLimits(25.0, 85.0);
+	difPPSqrang2.GetYaxis()->SetRangeUser(-3.0, 3.0);
+	difPPSqrang2.SetMarkerStyle(53);
+	difPPSqrang2.SetMarkerSize(2);
+	difPPSqrang2.SetMarkerColor(kGreen);
 	difPPSqrang2.Draw("P, same");
 
-	difPPSqrang3.SetMarkerStyle(55);
-	difPPSqrang3.SetMarkerSize(1);
-	difPPSqrang3.SetMarkerColor(kRed);
+	difPPSqrang3.SetMarkerStyle(53);
+	difPPSqrang3.SetMarkerSize(2);
+	difPPSqrang3.SetMarkerColor(kBlue);
 	difPPSqrang3.Draw("P, same");
 
-	difDDSqrang1.SetMarkerStyle(53);
-	difDDSqrang1.SetMarkerSize(1);
-	difDDSqrang1.SetMarkerColor(kGreen);
+	difDDSqrang1.SetMarkerStyle(54);
+	difDDSqrang1.SetMarkerSize(2);
+	difDDSqrang1.SetMarkerColor(kRed);
 	difDDSqrang1.Draw("P, same");
 
 	difDDSqrang2.SetMarkerStyle(54);
-	difDDSqrang2.SetMarkerSize(1);
+	difDDSqrang2.SetMarkerSize(2);
 	difDDSqrang2.SetMarkerColor(kGreen);
 	difDDSqrang2.Draw("P, same");
 
-	difDDSqrang3.SetMarkerStyle(55);
-	difDDSqrang3.SetMarkerSize(1);
-	difDDSqrang3.SetMarkerColor(kGreen);
+	difDDSqrang3.SetMarkerStyle(54);
+	difDDSqrang3.SetMarkerSize(2);
+	difDDSqrang3.SetMarkerColor(kBlue);
 	difDDSqrang3.Draw("P, same");
 
 	difPTSqrang.SetMarkerStyle(20);
 	difPTSqrang.SetMarkerSize(1);
-	difPTSqrang.SetMarkerColor(kBlue);
+	difPTSqrang.SetMarkerColor(kBlack);
 	difPTSqrang.Draw("P, same");
+*/
 	//TString outFname = "/home/zalewski/Desktop/6He/analysis/experimental/myData" + myRunNumber + "cvs";
-	myCanvas.Print(TString::Format("/home/zalewski/Desktop/6He/analysis/handJob/myData%d.png", myRunNumber));
+	myCanvas.Print(TString::Format("/home/zalewski/Desktop/6He/analysis/exp/myData_%d_%d.png", varX, varZ));
 	myCanvas.SaveAs("/home/zalewski/Desktop/macro.C");
 
 
 //gPad->Print("/home/zalewski/Desktop/myPP.jpeg");
 
-}
-
-int main(int argc, char** argv)
-{
-	firstRun = (argc > 1) ? atoi(argv[1]) : 100;
-	Int_t mySeed = (argc > 2) ? atoi(argv[2]) : 0;
-	gRandom->SetSeed(mySeed);
-	printf("Passed seed: %d\n", gRandom->GetSeed());
-	calculate = true;
-	google::InitGoogleLogging(argv[0]);
-	// The variable to solve for with its initial value. It will be
-	// mutated in place by the solver.
-	
-
-	// Build the problem.
-	ceres::Problem problem;
-
-	// Set up the only cost function (also known as residual). This uses
-	// auto-differentiation to obtain the derivative (jacobian).
-	ceres::NumericDiffOptions diffOpts;
-	diffOpts.relative_step_size = 0.1;
-	double x[numberOfParameters];
-	ceres::CostFunction* cost_function =
-		new ceres::NumericDiffCostFunction<CostFunctor, ceres::CENTRAL, 4, numberOfParameters>(new CostFunctor, ceres::DO_NOT_TAKE_OWNERSHIP, 2, diffOpts);
-//                                                           |        |   |
-//                               Finite Differencing Scheme -+        |   |
-//                               Dimension of residual ---------------+   |
-//                               Dimension of x --------------------------+
-	problem.AddResidualBlock(cost_function, nullptr, x);
-/*
-	lowerParamBound[sLang1] = -3.0;
-	lowerParamBound[sLang2] = -3.0;
-	lowerParamBound[sLang3] = -3.0;
-	lowerParamBound[sRang] = -3.0;
-	lowerParamBound[sTarPos] = 0.0;
-	*/lowerParamBound[sDistL] = -40.0;
-	lowerParamBound[sDistR] = -40.0;
-
-
-/*	upperParamBound[sLang1] = 3.0;
-	upperParamBound[sLang2] = 3.0;
-	upperParamBound[sLang3] = 3.0;
-	upperParamBound[sRang] = 3.0;
-	upperParamBound[sTarPos] = 10.0;
-	*/upperParamBound[sDistL] = 40.0;
-	upperParamBound[sDistR] = 40.0;
-/*
-	x[sLang1] = 0.0;
-	x[sLang2] = 0.0;
-	x[sLang3] = 0.0;
-	x[sRang] = 0.0;
-	x[sTarPos] = 0.0;
-	x[sDistL] = 0.0;
-	x[sDistR] = 0.0;
-*/
-
-
-
-	for (int iii = 0; iii < numberOfParameters; iii++)
-	{
-		problem.SetParameterLowerBound(x, iii, lowerParamBound[iii]);
-		problem.SetParameterUpperBound(x, iii, upperParamBound[iii]);
-	}
-
-	// Run the solver!
-   ceres::Solver::Options options;
-	options.trust_region_strategy_type = ceres::DOGLEG;
-	options.dogleg_type = ceres::SUBSPACE_DOGLEG;
-   options.linear_solver_type = ceres::DENSE_NORMAL_CHOLESKY;
-	options.minimizer_progress_to_stdout = true;
-	options.num_threads = 20;
-	options.max_num_iterations = 50;
-	ceres::Solver::Summary summary;
-
-
-	if (calculate)
-	{
-		std::ofstream outStreamGenerated(outGeneratedParams, std::ios::out | std::ofstream::app);
-		std::ofstream outStreamObtained(outObtainedParams, std::ios::out | std::ofstream::app);
-		for (auto &&iii : parNames)
-		{
-			//outStreamGenerated<<iii<<" ";
-			//outStreamObtained<<iii<<" ";
-		}
-
-		//outStreamGenerated<<std::endl;
-		//outStreamObtained<<std::endl;
-
-		outStreamGenerated<<firstRun<<"\t";
-		//randomly set initial value of the parameters
-		for (int jjj = 0; jjj < numberOfParameters; jjj++)
-		{	
-			x[jjj] = gRandom->Uniform(lowerParamBound[jjj], upperParamBound[jjj]);
-			//print the generated parameters to the file				
-			outStreamGenerated<<x[jjj]<<" ";
-		}
-		outStreamGenerated<<std::endl;
-
-		//solve for the generated values
-		Solve(options, &problem, &summary);
-
-		outStreamObtained<<firstRun<<"\t";
-		for (int jjj = 0; jjj < numberOfParameters; jjj++)
-		{
-			//print the obtained parameters to the file				
-			outStreamObtained<<x[jjj]<<" ";
-		}
-		//save the graph, generated parameters and final parameters
-		outStreamObtained<<std::endl;
-		outStreamGenerated.close();
-		outStreamObtained.close();
-	}
-	drawResults(x, firstRun);
-
-	//std::cout << summary.FullReport() << "\n";
-
-	return 0;
 }
