@@ -294,7 +294,7 @@ int beamCutter()
 
 	tarPos[0] = parameters[sTarPos];
 	tarPos[1] = parameters[sTarPos];
-	tarPos[2] = parameters[sTarPos] + 2.0;
+	tarPos[2] = parameters[sTarPos];
 
 	tarAngle[0] = 45.0 * TMath::DegToRad();
 	tarAngle[1] = 6.0 * TMath::DegToRad();
@@ -305,13 +305,13 @@ int beamCutter()
 
 	ROOT::RDataFrame inDF("simplified", inFname.Data());
 	auto outDF = inDF.Filter("nx1<100 && nx2<100 && ny1<100 && ny2<100")
-						.Filter("trigger==1")
+						.Filter("trigger!=1")
 						.Filter("tdcF3[0]*tdcF3[1]*tdcF3[2]*tdcF3[3]*tdcF5[0]*tdcF5[1]*tdcF5[2]*tdcF5[3]")
 						.Filter("(tdcF3[0]-tdcF3[1]) > -50.0 && (tdcF3[0]-tdcF3[1]) < 50.0")
 						.Filter("(tdcF3[0]-tdcF3[2]) > -50.0 && (tdcF3[0]-tdcF3[2]) < 50.0")
 						.Filter("(tdcF3[0]-tdcF3[3]) > -50.0 && (tdcF3[0]-tdcF3[3]) < 50.0")
 						.Filter("(tdcF5[0]-tdcF5[1]) > -50.0 && (tdcF5[0]-tdcF5[1]) < 50.0")
-						.Filter(filterToF,{"tdcF3", "tdcF5"})
+						//.Filter(filterToF,{"tdcF3", "tdcF5"})
 						.Filter(filterMWPC(0),{"x1","nx1"})
 						.Filter(filterMWPC(1),{"y1","ny1"})
 						.Filter(filterMWPC(2),{"x2","nx2"})
@@ -333,10 +333,9 @@ int beamCutter()
 							.Define("tarCut1", "tarVertex.X()>vCut[mX1] && tarVertex.X()<vCut[X1] && tarVertex.Y()>vCut[mY1] && tarVertex.Y()<vCut[Y1]")
 							.Define("tarCut2", "tarVertex.X()>vCut[mX2] && tarVertex.X()<vCut[X2] && tarVertex.Y()>vCut[mY2] && tarVertex.Y()<vCut[Y2]")
 							.Define("tarCut3", "tarVertex.X()>vCut[mX3] && tarVertex.X()<vCut[X3] && tarVertex.Y()>vCut[mY3] && tarVertex.Y()<vCut[Y3]");
-	auto filteredDF = newDF.Filter("tof>160 && tof<180");
 
-	TString outFname = TString::Format("/home/zalewski/dataTmp/beamSource/beamIntegral%d_v1.root", cs::runNo);
-	filteredDF.Snapshot("beamSource", outFname.Data());
+	TString outFname = TString::Format("/home/zalewski/dataTmp/beamSource/beamIntegral%d_thesis.root", cs::runNo);
+	newDF.Snapshot("beamSource", outFname.Data());
 
 	return 0;
 }

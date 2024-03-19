@@ -36,7 +36,7 @@
 												  "tdcMWPC",
 												  "SQ300"};
 
-	std::vector<std::string> columnList{"SQX_L_strip",
+	std::vector<std::string> columnListDT{"SQX_L_strip",
 										"SQX_R_strip",
 										"SQY_L_strip",
 										"SQY_R_strip",
@@ -51,17 +51,67 @@
 										"MWPC_2_X",
 										"MWPC_1_Y",
 										"MWPC_2_Y",
-										"kinE"};//,
-										//"pp",
-										//"dd"};
+										"kinE",
+										"sumCut",
+										"dtLeneLang",
+										"dtLeneRang",
+										"dtAngAng"};
 
-	std::vector<std::string> MCcolumnList{"geo",
+		std::vector<std::string> columnList{"SQX_L_strip",
+										"SQX_R_strip",
+										"SQY_L_strip",
+										"SQY_R_strip",
+										"sqlde",
+										"sqletot",
+										"sqlang",
+										"sqrde",
+										"sqretot",
+										"sqrang",
+										"geo",
+										"MWPC_1_X",
+										"MWPC_2_X",
+										"MWPC_1_Y",
+										"MWPC_2_Y",
+										"kinE",
+										"pp",
+										"dd"};
+
+std::vector<std::string> MCcolumnListShort{"geo",
+											"fZ2H",
+											"mcPP",
+											"mcDD",
+											"fevx",
+											"fevy",
+											"fThetaCM"};
+
+std::vector<std::string> MCcolumnListDT{"geo",
 										"fZ2H",
-										"mcPP",
-										"mcDD",
+										"mcHe4",
+										"mcLeneLang",
 										"fevx",
 										"fevy",
-										"fThetaCM"};
+										"fThetaCM",
+										"sqrang",
+										"lvBeam",										
+										"dtCM"};
+
+std::vector<std::string> MCcolumnListLong{"geo",
+									"fZ2H",
+									"mcPP",
+									"mcDD",
+									"fevx",
+									"fevy",
+									"fevz",
+									"tarVertex",
+									"sqlang",
+									"fsqlang",
+									"sqrang",
+									"fsqrang",
+									"sqrde",
+									"sqretot",
+									"sqlde",
+									"sqletot",
+									"fThetaCM"};
 
 std::vector<std::string> smallerTree{"kinE",
 									 "elo",
@@ -148,9 +198,13 @@ std::vector<std::string> smallerTree{"kinE",
 	TCutG *GCutmcDDAngAng, *GCutmcDDLeneLang, *GCutmcDDReneRang;
 
 	//dt cuts
-	TCutG *GCdtLT1, *GCdtLT2, *GCdts1, *GCdts2, *GCdts3, *GCdts4;
-	TCutG *GCutdtLEneLAng, *GCutdtLEneRAng;
+	TCutG *GCdtLTl, *GCdtLTr, *GCdtRTl, *GCdtRTr, *GCdts1, *GCdts2;
+	TCutG *GCutdtLeneLang, *GCutdtLeneRang;
 	TCutG *GCnoProtDeut, *GCbHe6, *GCdtTT;
+	TCutG *GCmcHe4, *GCmcLeneLang, *GCutdtEneEne, *GCutdtAngAng;
+	// dt missing mass cuts
+	TCutG *GCdtmm3H_N, *GCdtmm4He_N;
+
 
 
 	//TELoss siEloss1H, siEloss2H, siEloss3H, siEloss4He, siEloss6He;
@@ -173,6 +227,6 @@ std::vector<std::string> smallerTree{"kinE",
 	Double_t beamDeadLayer;
 	Double_t ionDeadLayer;
 
-	enum reactionType{elastic, MC, dt, all};
+	enum reactionType{elastic, MC, dt, mcDT};
 
 #endif

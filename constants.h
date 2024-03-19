@@ -42,27 +42,7 @@ namespace cs
 	static const float		sqLDeadLayer = 3.5;
 
 	//*************************MWPC******************************************************
-/*
-	static const float	MWPC1_X_displacement	=	-1.0;
-	static const float	MWPC1_Y_displacement	=	-2.1375;
-	static const float	MWPC2_X_displacement	=	0.2;
-	static const float	MWPC2_Y_displacement	=	-1.125;
 
-	static const float	leftDetShift = 0.0;
-	static const float	rightDetShift = 0.0;
-	static const float	leftDetShiftX = 0.0;
-	static const float	rightDetShiftX = 0.0;
-
-	static const float	leftDetDist = 0.0;
-	static const float	rightDetDist = 0.0;
-
-	static const float	leftAngShift = 0.0;
-	static const float	rightAngShift = 0.0;
-
-	static const float	tarThicknessShift = 36.8251;
-	static const float	tarPos = 0.0;
-	static const float	tarAngle = 0.0;
-*/
 	static const float	MWPC1_X_displacement = 0.0;
 	static const float	MWPC1_Y_displacement = 0.0;
 	static const float	MWPC2_X_displacement = 0.0;
@@ -98,18 +78,15 @@ namespace cs
 	static const float		alpha_from_Ra226[4]{4.751, 5.459, 5.972, 7.661};
 	static const float		u_to_MeV	=	931.494028;
 
-	static const float		massN	= 1008664.91580 * u_to_MeV/1000000.0;
-	static const float 		mass1H 	= 938.272013;
-	static const float 		mass2H 	= 1875.613000;
-	static const float 		mass3H 	= 2808.921000;
-	static const float 		mass3He = 3016029.32265 * u_to_MeV/1000000.0;
-	static const float 		mass4He = 3727.379000;
-	static const float 		mass5He = 4667.679451;
-	static const float 		mass6He = 5605.534341;
-	static const float 		mass7He = 7027991 * u_to_MeV/1000000.0;
-	static const float 		mass7Li = 7016003.437 * u_to_MeV/1000000.0;
-	static const float 		mass8Li = 8022486.25 * u_to_MeV/1000000.0;
-	static const float 		mass9Li = 9026790.19 * u_to_MeV/1000000.0;
+	static const float		massN	= 939.565;
+	static const float 		mass1H 	= 938.782;
+	static const float 		mass2H 	= 1876.12;
+	static const float 		mass3H 	= 2809.43;
+	static const float 		mass3He = 2809.4;
+	static const float 		mass4He = 3728.4;
+	static const float 		mass5He = 4668.7;
+	static const float 		mass6He = 5606.556;
+	static const float 		mass7He = 6546.53;
 	static const float		Qpt		= (mass1H + mass6He) - (mass3H + mass4He);
 	static const float		Qdt		= (mass2H + mass6He) - (mass3H + mass5He);
 
@@ -128,7 +105,7 @@ namespace cs
 	static const TString 	s_inFname("run00_12");
 	static const TString	dir_gcut("/home/zalewski/aku/wrk/GCuts/");
 
-	static const int		runNo = 30;
+	static const int		runNo = 2;
 	static const TString	inDir = "raw";
 	static const bool 		fixedMWPC = false;
 	static const int		tarMass = 2;

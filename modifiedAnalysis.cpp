@@ -1,5 +1,108 @@
 #include "modifiedAnalysis.hh"
 
+TH1F makeGlobHist(TH1F *xSectHistGeo1, TH1F *xSectHistGeo2, TH1F *xSectHistGeo3)
+{
+	TString histName =  xSectHistGeo1->GetName();
+	histName.ReplaceAll("_geo1_", "").ReplaceAll("_stack_1", "");
+
+	TString histTitle =  xSectHistGeo1->GetTitle();
+	histTitle.ReplaceAll(" in geo1 [CM deg]", "");
+
+	TH1F xSectFinalHist(histName.Data(),histTitle.Data(), 90,0,180);
+	xSectFinalHist.GetXaxis()->SetTitle(xSectHistGeo1->GetXaxis()->GetTitle());
+	xSectFinalHist.GetYaxis()->SetTitle(xSectHistGeo1->GetYaxis()->GetTitle());
+
+	Bool_t overlappingBinsFlag=false;
+	for (int iii = 0; iii < 180; iii++)
+	{
+		if (xSectHistGeo1->GetBinContent(iii)>0.0001)
+		{
+			xSectFinalHist.SetBinContent(iii, xSectHistGeo1->GetBinContent(iii));
+			xSectFinalHist.SetBinError(iii, xSectHistGeo1->GetBinError(iii));
+			overlappingBinsFlag=true;
+		}
+
+		if (xSectHistGeo2->GetBinContent(iii)>0.0001)
+		{
+			xSectFinalHist.SetBinContent(iii, xSectHistGeo2->GetBinContent(iii));
+			xSectFinalHist.SetBinError(iii, xSectHistGeo2->GetBinError(iii));
+			if (overlappingBinsFlag==true)  throw std::invalid_argument( "overlapping bins in joining geoHists into global hist" );
+		}
+		
+		if (xSectHistGeo3->GetBinContent(iii)>0.0001)
+		{
+			xSectFinalHist.SetBinContent(iii, xSectHistGeo3->GetBinContent(iii));
+			xSectFinalHist.SetBinError(iii, xSectHistGeo3->GetBinError(iii));
+			if (overlappingBinsFlag==true)  throw std::invalid_argument( "overlapping bins in joining geoHists into global hist" );
+		}
+		overlappingBinsFlag=false;
+	}
+	return xSectFinalHist;
+}
+
+void makeTGraph(TH1F inHist)
+{
+	//extract data from histogram
+	std::vector<Double_t> xAxis;
+	std::vector<Double_t> yAxis;
+	std::vector<Double_t> yAxisError;
+	std::vector<Double_t> xAxisError;
+	TString outFilePath = TString::Format("/home/zalewski/Desktop/6He/analysis/dataOut/%s.csv", inHist.GetName());
+	std::ofstream outStream(outFilePath.Data(), std::ios::trunc);
+
+	outStream<<"CM angle\t"<<"dSigma/dPhi\t"<<"error"<<"\n";
+	for (int iii = 1; iii < 90; iii++)
+	{
+		outStream<<inHist.GetBinCenter(iii)<<"\t"<<inHist.GetBinContent(iii)<<"\t";
+		if (inHist.GetBinContent(iii)>0.0001)
+		{
+			outStream<<inHist.GetBinError(iii)<<"\n";
+		}
+		
+		else
+		outStream<<0.0<<"\n";
+		//printf("bin: %d\tsigma: %f\tbinCenter: %f\n", iii, inHist.GetBinContent(iii), inHist.GetBinCenter(iii));
+		if (inHist.GetBinContent(iii)>0.0001)
+		{
+			xAxis.push_back(inHist.GetBinCenter(iii));
+			yAxis.push_back(inHist.GetBinContent(iii));
+			yAxisError.push_back(inHist.GetBinError(iii));
+			xAxisError.push_back(0.5);
+			
+			//printf("angle(CM): %f\tdSigma/dTheta: %f\terror: %f\n", inHist.GetBinCenter(iii), inHist.GetBinContent(iii), inHist.GetBinError(iii));
+		}		
+	}
+
+	TGraphErrors myTGraph(xAxis.size(), &xAxis[0], &yAxis[0], &xAxisError[0], &yAxisError[0]);
+	myTGraph.SetTitle(inHist.GetTitle());
+	myTGraph.GetXaxis()->SetTitle(inHist.GetXaxis()->GetTitle());
+	myTGraph.GetYaxis()->SetTitle(inHist.GetYaxis()->GetTitle());
+	myTGraph.GetXaxis()->CenterTitle();
+	myTGraph.GetYaxis()->CenterTitle();
+	myTGraph.SetMinimum(0.001);
+	myTGraph.SetMaximum(1000);
+	TString histName = inHist.GetName();
+	//pp reaction has larger xSections
+	printf("%s\n", histName.Data());
+	if (!histName.CompareTo("xSect1H"))
+	{
+		myTGraph.SetMinimum(0.1);
+	}
+
+	if (!histName.CompareTo("xSectDT"))
+	{
+		myTGraph.SetMinimum(0.05);
+		myTGraph.SetMaximum(50);
+	}
+
+	TCanvas *myCanvas = new TCanvas("myCanvas","myCanvas",10,10,1200,700);
+	myCanvas->SetLogy();
+	myTGraph.Draw("AP");
+	TString canvName = TString::Format("/home/zalewski/Desktop/6He/analysis/dataOut/%s.png", inHist.GetName());
+	myCanvas->SaveAs(canvName.Data());
+	delete myCanvas;	
+}
+
 Double_t getCMAngleDT(Double_t m_sqrang, TLorentzVector m_lvBeam)
 {
 	Int_t m_lang = 0;
@@ -170,6 +273,92 @@ Double_t recoCMAngle(TLorentzVector m_lv2H_CM, TLorentzVector m_flvBeam)
 	return m_lv2H_CM.Vect().Angle(m_flvBeam.Vect())*TMath::RadToDeg();
 }
 
+void getStatisticalError(Int_t geo, Int_t mass)
+{	
+
+	Long_t nBeam[3] = {3521461760, 7627521280, 20136056320};
+
+	Double_t targetError[2][3] = {	{0.2555, 0.1646, 0.1755},
+									{0.2238, 0.1732, 0.2268}};
+	//Statistical error of each bin = Err(number of exp events) + Err(MC scattered) + Err(MC observed) + Err(tarThicnkess) + Err(nBeam)
+
+	//error of exp events
+	TFile realHitsFile("/home/zalewski/Desktop/6He/analysis/dataOut/realDataCMHisto.root", "READ");
+	TString realHistName = TString::Format("real_geo%d_%dH", geo, mass);
+	TH1F *realHist = (TH1F*)realHitsFile.Get(realHistName.Data());
+
+	TString realHistErrorName = TString::Format("realError_geo%d_%dH", geo, mass);
+	TH1F realHistError(realHistErrorName.Data(), realHistErrorName.Data(), 90,0,180);
+	
+	for (int iii = 0; iii < 90; iii++)
+	{
+		if (realHist->GetBinContent(iii)>0)
+		{
+			realHistError.SetBinContent(iii, sqrt(realHist->GetBinContent(iii))/realHist->GetBinContent(iii));
+		}
+	}
+
+	//error of MC scattered
+	TFile MCScatteredEventsFile("/home/zalewski/Desktop/6He/analysis/dataOut/efficiency.root", "READ");
+	TString MCScatteredHistName = TString::Format("scattered_geo%d_%dH", geo, mass);
+	TH1F *MCScatteredHist = (TH1F*)MCScatteredEventsFile.Get(MCScatteredHistName.Data());
+
+	TString MCScatteredHistErrorName = TString::Format("scatteredError_geo%d_%dH", geo, mass);
+	TH1F  MCScatteredHistError(MCScatteredHistErrorName.Data(), MCScatteredHistErrorName.Data(), 90,0,180);
+	
+	for (int iii = 0; iii < 90; iii++)
+	{
+		if (MCScatteredHist->GetBinContent(iii)>0)
+		{
+			MCScatteredHistError.SetBinContent(iii, sqrt(MCScatteredHist->GetBinContent(iii))/MCScatteredHist->GetBinContent(iii));
+			//printf("Exp events: %f\tErr: %f\n", MCScatteredHist->GetBinContent(iii), sqrt(MCScatteredHist->GetBinContent(iii))/MCScatteredHist->GetBinContent(iii));
+		}		
+	}	
+
+
+	//error of MC observed
+	TFile MCObservedEventsFile("/home/zalewski/Desktop/6He/analysis/dataOut/efficiency.root", "READ");
+	TString MCObservedHistName = TString::Format("observed_geo%d_%dH", geo, mass);
+	TH1F *MCObservedHist = (TH1F*)MCObservedEventsFile.Get(MCObservedHistName.Data());
+
+	TString MCObservedHistErrorName = TString::Format("observedError_geo%d_%dH", geo, mass);
+	TH1F  MCObservedHistError(MCObservedHistErrorName.Data(), MCObservedHistErrorName.Data(), 90,0,180);
+	
+	for (int iii = 0; iii < 90; iii++)
+	{
+		if (MCObservedHist->GetBinContent(iii)>0)
+		{
+			MCObservedHistError.SetBinContent(iii, sqrt(MCObservedHist->GetBinContent(iii))/MCObservedHist->GetBinContent(iii));
+			//printf("Exp events: %f\tErr: %f\n", MCObservedHist->GetBinContent(iii), sqrt(MCObservedHist->GetBinContent(iii))/MCObservedHist->GetBinContent(iii));
+		}
+	}	
+
+	//error of Beam and Tar
+	TString beamTargetHistErrorName = TString::Format("beamTargetError_geo%d_%dH", geo, mass);
+	TH1F  beamTargetHistError(beamTargetHistErrorName.Data(), beamTargetHistErrorName.Data(), 90,0,180);
+	for (int iii = 0; iii < 90; iii++)
+	{
+		beamTargetHistError.SetBinContent(iii, sqrt(nBeam[geo-1])/nBeam[geo-1] + targetError[mass-1][geo-1]);
+		//printf("Exp events: %f\tErr: %f\n", sqrt(nBeam[geo-1])/nBeam[geo-1], sqrt(nBeam[geo-1])/nBeam[geo-1] + targetError[mass-1][geo-1]);
+	}	
+
+	TString totalHistErrorName = TString::Format("totalError_geo%d_%dH", geo, mass);
+	TH1F totalErrorHist(totalHistErrorName.Data(), totalHistErrorName.Data(), 90,0,180);
+
+	totalErrorHist.Add(&realHistError);
+	//totalErrorHist.Add(&MCScatteredHistError);
+	//totalErrorHist.Add(&MCObservedHistError);
+	//totalErrorHist.Add(&beamTargetHistError);
+
+	for (int iii = 0; iii < 90; iii++)
+	{
+		printf("Exp events: %d\tErr: %f\n", iii, totalErrorHist.GetBinContent(iii));
+	}
+	
+	TFile errorOutFile("/home/zalewski/Desktop/6He/analysis/dataOut/error.root", "UPDATE");
+	totalErrorHist.Write(totalErrorHist.GetName(), 1);
+}
+
 void getAngleError(Int_t geo, Int_t mass)
 {
 	//TFile histOutputFile("/home/zalewski/Desktop/6He/analysis/dataOut/tmp.root", "UPDATE");
@@ -222,8 +411,7 @@ std::vector<Double_t> getRelativeError(TH1F *my1DHist)
 		{
 			relativeError.at(iii) = my1DHist->GetBinError(iii)/my1DHist->GetBinContent(iii);
 			//printf("Bin: %d\tbin value: %f\tbin error: %f\t%f\n", iii, my1DHist->GetBinContent(iii),my1DHist->GetBinError(iii), relativeError.at(iii)*100.0);
-		}
-		
+		}	
 
 	}
 	return relativeError;
@@ -267,7 +455,7 @@ void calculateXsection(Int_t geo, Int_t mass, Double_t beamTargetIntegral, Doubl
 	TH1F xSection(*realHist);
 	xSection.SetNameTitle(xSectionHistName.Data(), xSectionHistTitle.Data());
 	xSection.Divide(&thetaIntegral);
-	xSection.Multiply(efficiencyHist);
+	xSection.Divide(efficiencyHist);
 	xSection.Scale(beamTargetIntegral/(2.0*TMath::Pi()));
 	setRelativeError(&xSection, relativeError, additionalError);
 
@@ -293,8 +481,8 @@ void calculateXsection(Int_t geo, Int_t mass, Double_t beamTargetIntegral, Doubl
 
 void calculateXsectionDT()
 {
-	Double_t beamTargetIntegral = 1e-4*1.312;
-	Double_t additionalError = 0.3;
+	Double_t beamTargetIntegral = 1e-4*1.514;
+	Double_t additionalError = 0.0;
 	//efficiency histogram
 	TString efficiencyDataPath = "/home/zalewski/Desktop/6He/analysis/dataOut_dt/efficiency.root";
 	TFile efficiencyDataFile(efficiencyDataPath.Data(), "READ");	
@@ -342,7 +530,7 @@ void calculateEfficiency(Int_t geo, Int_t mass)
 	//trigger=true;
 	TFile histOutputFile("/home/zalewski/Desktop/6He/analysis/dataOut/efficiency.root", "UPDATE");
 	
-	TString inFName = TString::Format("/home/zalewski/dataTmp/small/v3/mc_out_geo%d_%dH_big.root", geo, mass);
+	TString inFName = TString::Format("/home/zalewski/dataTmp/small/v3/mc_out_geo%d_%dH.root", geo, mass);
 	TString histoName = TString::Format("scattered_geo%d_%dH", geo, mass);	
 	TString histoTitle = TString::Format("Theta angle scattered of {}^{%d}H in geo%d [CM deg]", mass, geo);
 	TString tarCutFilter = TString::Format("fevx>vCut[mX%d] && fevx<vCut[X%d] && fevy>vCut[mY%d] && fevy<vCut[Y%d]", geo, geo, geo, geo);
@@ -351,8 +539,7 @@ void calculateEfficiency(Int_t geo, Int_t mass)
 	if (mass==1)
 	{
 		auto scattered = inDF.Filter([geo](Double_t fevx, Double_t fevy){return filterTarget(fevx, fevy, geo);}, {"fevx", "fevy"})
-							 .Define("thetaCMAngle", getCMAngle1H,{"fsqlang","lvBeam"})
-							 .Histo1D<Double_t>({histoName.Data(), histoTitle.Data(), 90,0,180}, {"thetaCMAngle"});
+							 .Histo1D<Double_t>({histoName.Data(), histoTitle.Data(), 90,0,180}, {"fThetaCM"});
 		scattered->Write(scattered->GetName(), 1);
 
 		//pp in geo1 observed
@@ -360,13 +547,12 @@ void calculateEfficiency(Int_t geo, Int_t mass)
 		histoTitle.ReplaceAll("scattered", "observed");
 		auto observed = inDF.Filter([geo](Double_t fevx, Double_t fevy){return filterTarget(fevx, fevy, geo);}, {"fevx", "fevy"})
 		 					.Filter([geo](Double_t fZ2H){return (fZ2H>lCut || geo>1);}, {"fZ2H"})
-							.Filter("sqlde>0 && sqrde>0 && mcHe6 && mcPP")
-							.Define("thetaCMAngle", getCMAngle1H,{"fsqlang","lvBeam"})
-							.Histo1D<Double_t>({histoName.Data(), histoTitle.Data(), 90,0,180}, {"thetaCMAngle"});
+							.Filter("sqlde>0 && sqrde>0 && mcPP")
+							.Histo1D<Double_t>({histoName.Data(), histoTitle.Data(), 90,0,180}, {"fThetaCM"});
 		observed->Write(observed->GetName(), 1);
 
-		TH1D efficiency(*scattered);
-		efficiency.Divide(&(observed.GetValue()));
+		TH1D efficiency(*observed);
+		efficiency.Divide(&(scattered.GetValue()));
 		histoName.ReplaceAll("observed", "efficiency");
 		histoTitle = TString::Format("Efficiency of {}^{%d}H detection in geo%d [CM deg]", mass, geo);
 		efficiency.SetNameTitle(histoName.Data(), histoTitle.Data());
@@ -389,8 +575,7 @@ void calculateEfficiency(Int_t geo, Int_t mass)
 	else if (mass==2)
 	{
 		auto scattered = inDF.Filter([geo](Double_t fevx, Double_t fevy){return filterTarget(fevx, fevy, geo);}, {"fevx", "fevy"})
-							 .Define("thetaCMAngle", getCMAngle2H,{"fsqlang","lvBeam"})
-							 .Histo1D<Double_t>({histoName.Data(), histoTitle.Data(), 90,0,180}, {"thetaCMAngle"});
+							 .Histo1D<Double_t>({histoName.Data(), histoTitle.Data(), 90,0,180}, {"fThetaCM"});
 		scattered->Write(scattered->GetName(), 1);
 
 		//dd in geo1 observed
@@ -398,13 +583,12 @@ void calculateEfficiency(Int_t geo, Int_t mass)
 		histoTitle.ReplaceAll("scattered", "observed");
 		auto observed = inDF.Filter([geo](Double_t fevx, Double_t fevy){return filterTarget(fevx, fevy, geo);}, {"fevx", "fevy"})
 							.Filter([geo](Double_t fZ2H){return (fZ2H>lCut || geo>1);}, {"fZ2H"})
-							.Filter("sqlde>0 && sqrde>0 && mcHe6 && mcDD")
-							.Define("thetaCMAngle", getCMAngle2H,{"fsqlang","lvBeam"})
-							.Histo1D<Double_t>({histoName.Data(), histoTitle.Data(), 90,0,180}, {"thetaCMAngle"});
+							.Filter("sqlde>0 && sqrde>0 && mcDD")
+							.Histo1D<Double_t>({histoName.Data(), histoTitle.Data(), 90,0,180}, {"fThetaCM"});
 		observed->Write(observed->GetName(), 1);
 
-		TH1D efficiency(*scattered);
-		efficiency.Divide(&(observed.GetValue()));
+		TH1D efficiency(*observed);
+		efficiency.Divide(&(scattered.GetValue()));
 		histoName.ReplaceAll("observed", "efficiency");
 		histoTitle = TString::Format("Efficiency of {}^{%d}H detection in geo%d [CM deg]", mass, geo);
 		efficiency.SetNameTitle(histoName.Data(), histoTitle.Data());
@@ -433,7 +617,7 @@ void calculateEfficiencyDT()
 	//trigger=true;
 	TFile histOutputFile("/home/zalewski/Desktop/6He/analysis/dataOut_dt/efficiency.root", "UPDATE");
 	
-	TString inFName = TString::Format("/home/zalewski/dataTmp/small/v3/mc_out_geo2_dt_big.root");
+	TString inFName = TString::Format("/home/zalewski/dataTmp/small/v3/mc_out_geo2_2H_dt.root");
 	TString histoName = TString::Format("scattered_dt");	
 	TString histoTitle = TString::Format("Theta angle scattered of {}^{3}H in geo2 [CM deg]");
 	TString tarCutFilter = TString::Format("fevx>vCut[mX2] && fevx<vCut[X2] && fevy>vCut[mY2] && fevy<vCut[Y2]");
@@ -442,16 +626,17 @@ void calculateEfficiencyDT()
 
 	auto scattered = inDF.Filter([geo](Double_t fevx, Double_t fevy){return filterTarget(fevx, fevy, geo);}, {"fevx", "fevy"})
 						 //.Define("thetaCMAngle", getCMAngleDT,{"fsqrang","lvBeam"})
-						 .Define("thetaCMAngle", getCMAngleDTsimple, {"lv6He_CM."})
+						 //.Define("thetaCMAngle", getCMAngleDT, {"sqrang", "lvBeam"})
+						 .Define("thetaCMAngle", "180.0 - fThetaCM")
 						 .Histo1D<Double_t>({histoName.Data(), histoTitle.Data(), 90,0,180}, {"thetaCMAngle"});
 	scattered->Write(scattered->GetName(), 1);
 
 	histoName.ReplaceAll("scattered", "observed");
 	histoTitle.ReplaceAll("scattered", "observed");
 	auto observed = inDF.Filter([geo](Double_t fevx, Double_t fevy){return filterTarget(fevx, fevy, geo);}, {"fevx", "fevy"})
-						.Filter("(sqlde>5 || sqletot>1) && sqrde>0 && he4")
-						.Define("thetaCMAngle", getCMAngleDTsimple, {"lv6He_CM."})
-						.Histo1D<Double_t>({histoName.Data(), histoTitle.Data(), 90,0,180}, {"thetaCMAngle"});
+						.Filter("mcLeneLang && mcHe4")
+						.Define("thetaCMAngle", getCMAngleDT, {"sqrang", "lvBeam"})
+						.Histo1D<Double_t>({histoName.Data(), histoTitle.Data(), 90,0,180}, {"dtCM"});
 	observed->Write(observed->GetName(), 1);
 
 	TH1D efficiency(*scattered);
@@ -468,7 +653,7 @@ void calculateEfficiencyDT()
 
 void trimHistogramLeft(TH1F *tmpHisto, Int_t noBins)
 {
-	Int_t minimumBin = tmpHisto->FindFirstBinAbove(0.1);
+	Int_t minimumBin = tmpHisto->FindFirstBinAbove(0.001);
 	for (int iii = minimumBin; iii < minimumBin + noBins; iii++)
 	{
 		tmpHisto->SetBinContent(iii, 0.0);
@@ -477,7 +662,7 @@ void trimHistogramLeft(TH1F *tmpHisto, Int_t noBins)
 
 void trimHistogramRight(TH1F *tmpHisto, Int_t noBins)
 {
-	Int_t maximumBin = tmpHisto->FindLastBinAbove(0.01);
+	Int_t maximumBin = tmpHisto->FindLastBinAbove(0.001);
 	for (int iii = maximumBin - noBins; iii <= maximumBin; iii++)
 	{
 		tmpHisto->SetBinContent(iii, 0.0);
@@ -545,11 +730,11 @@ void makeGraph()
 	eff_geo3_2H->Scale(1e-2);
 
 	trimHistogramLeft(xSect_geo1_1H, 2);
-	trimHistogramRight(xSect_geo1_1H, 7);
-	trimHistogramLeft(xSect_geo2_1H, 5);
-	trimHistogramRight(xSect_geo2_1H, 7);
-	trimHistogramLeft(xSect_geo3_1H, 6);
-	trimHistogramRight(xSect_geo3_1H, 2);
+	trimHistogramRight(xSect_geo1_1H, 3);
+	trimHistogramLeft(xSect_geo2_1H, 9);
+	trimHistogramRight(xSect_geo2_1H, 6);
+	trimHistogramLeft(xSect_geo3_1H, 8);
+	trimHistogramRight(xSect_geo3_1H, 3);
 
 	ppxSectStack->Add(xSect_geo1_1H, "E1");
 	ppxSectStack->Add(xSect_geo2_1H, "E1");
@@ -595,11 +780,11 @@ void makeGraph()
 	THStack *ddxSectStack = new THStack("DD X-section stack", ddGraphTitle.Data());
 	canvasDD->SetLogy();
 
-	trimHistogramLeft(xSect_geo1_2H, 3);
-	trimHistogramRight(xSect_geo1_2H, 8);
-	trimHistogramLeft(xSect_geo2_2H, 11);
-	trimHistogramRight(xSect_geo2_2H, 10);
-	trimHistogramLeft(xSect_geo3_2H, 6);
+	trimHistogramLeft(xSect_geo1_2H, 4);
+	trimHistogramRight(xSect_geo1_2H, 10);
+	trimHistogramLeft(xSect_geo2_2H, 10);
+	trimHistogramRight(xSect_geo2_2H, 6);
+	trimHistogramLeft(xSect_geo3_2H, 10);
 	trimHistogramRight(xSect_geo3_2H, 0);
 
 	ddxSectStack->Add(xSect_geo1_2H, "E1");
@@ -638,10 +823,19 @@ void makeGraph()
 	{
 		canvasDD->SaveAs("/home/zalewski/Desktop/6He/analysis/dataOut/dd_2.C");
 	}
-	
 
 	delete canvasDD;
 	delete ddxSectStack;
+
+	TH1F ddFinalHist1H(makeGlobHist(xSect_geo1_1H, xSect_geo2_1H, xSect_geo3_1H));
+	ddFinalHist1H.GetXaxis()->SetTitle("CM angle [deg]");
+	ddFinalHist1H.GetYaxis()->SetTitle("Differential cross section [mb/sr]");
+	makeTGraph(ddFinalHist1H);
+
+	TH1F ddFinalHist2H(makeGlobHist(xSect_geo1_2H, xSect_geo2_2H, xSect_geo3_2H));
+	ddFinalHist2H.GetXaxis()->SetTitle("CM angle [deg]");
+	ddFinalHist2H.GetYaxis()->SetTitle("Differential cross section [mb/sr]");	
+	makeTGraph(ddFinalHist2H);
 }
 
 
@@ -663,13 +857,13 @@ void makeGraphDT()
 	TH1F *xSect_dt = (TH1F*)xSectionFile.Get(histoName.Data());
 
 	TCanvas *canvasDT = new TCanvas("canvasDT","canvasDT",10,10,1200,700);
-	TString dtGraphTitle = "{}^{6}He({}^{2}H,{}^{3}H){}^{5}He reaction cross section[CM deg]";
+	TString dtGraphTitle = "{}^{6}He({}^{2}H,{}^{3}H){}^{5}He reaction cross section";
 	THStack *dtxSectStack = new THStack("DT X-section stack", dtGraphTitle.Data());
 	canvasDT->SetLogy();
 
 	eff_dt->Scale(1e-2);
-	trimHistogramLeft(xSect_dt, 2);
-	trimHistogramRight(xSect_dt, 9);
+	trimHistogramLeft(xSect_dt, 1);
+	trimHistogramRight(xSect_dt, 12);
 
 	dtxSectStack->Add(xSect_dt, "E1");
 	//dtxSectStack->Add(eff_dt);
@@ -696,11 +890,15 @@ void makeGraphDT()
 	canvasDT->Print(outDTFileName.Data());
 	if (saveHistogram)
 	{
-		canvasDT->SaveAs("/home/zalewski/Desktop/6He/analysis/dataOut_dt/dt_2.C");
+		canvasDT->SaveAs("/home/zalewski/Desktop/6He/analysis/dataOut_dt/dt.C");
 	}
 	
 	delete dtxSectStack;
 	delete canvasDT;
+	xSect_dt->SetName("xSectDT");
+	xSect_dt->GetXaxis()->SetTitle("CM angle [deg]");
+	xSect_dt->GetYaxis()->SetTitle("Differential cross section [mb/sr]");
+	makeTGraph(*xSect_dt);
 }
 
 void makeSmallFile()
@@ -849,16 +1047,16 @@ void realDataAnalyzer()
 	parameters[sMWPC_2_X] = 0.2; 
 	parameters[sMWPC_2_Y] = -1.125;
 	parameters[sTarPos] = 10.0;
-	parameters[sLang1] = 0.0;
+	parameters[sLang1] = 0.3;
 	parameters[sLang2] = 0.0;
-	parameters[sLang3] = -1.0;
+	parameters[sLang3] = 0.0;
 	parameters[sRang] = 0.0;
-	parameters[sDistL] = -15.0;
-	parameters[sDistR] = -25.0;
+	parameters[sDistL] = -20.0;
+	parameters[sDistR] = -30.0;
 
 	tarPos[0] = parameters[sTarPos];
 	tarPos[1] = parameters[sTarPos];
-	tarPos[2] = parameters[sTarPos] + 2.0;
+	tarPos[2] = parameters[sTarPos] - 2.0;
 
 	tarAngle[0] = 45.0 * TMath::DegToRad();
 	tarAngle[1] = 6.0 * TMath::DegToRad();
@@ -874,7 +1072,8 @@ void realDataAnalyzer()
 
 	
 	ROOT::EnableImplicitMT();
-	TString smallFileName = "/home/zalewski/dataTmp/small/small_2.root";
+	//TString smallFileName = "/home/zalewski/dataTmp/small/small_2.root";
+	TString smallFileName = "/home/zalewski/dataTmp/small/small.root";
 	ROOT::RDataFrame smallDF("smallReal", smallFileName.Data());
 
 	auto newDF = smallDF.Define("MWPC", getMWPC, {"MWPC_1_X", "MWPC_1_Y", "MWPC_2_X", "MWPC_2_Y"})
@@ -891,11 +1090,11 @@ void realDataAnalyzer()
 
 						.Define("v2H", "leftGlobVertex-tarVertex")
 						.Define("v6He", "rightGlobVertex-tarVertex")
-						.Define("sqlang", [](TVector3 v2H, TVector3 vBeam){return v2H.Angle(vBeam)*TMath::RadToDeg();}, {"v2H", "vBeam"})
+						.Redefine("sqlang", [](TVector3 v2H, TVector3 vBeam){return v2H.Angle(vBeam)*TMath::RadToDeg();}, {"v2H", "vBeam"})
                         .Define("mc1H", getCMAngle1H, {"sqlang", "lvBeam"})
 					    .Define("mc2H", getCMAngle2H, {"sqlang", "lvBeam"})
 						.Define("lCut", "(v2H.X()>56.0 || geo>1)")
-						.Define("sqrang", [](TVector3 v6He, TVector3 vBeam){return v6He.Angle(vBeam)*TMath::RadToDeg();}, {"v6He", "vBeam"})
+						.Redefine("sqrang", [](TVector3 v6He, TVector3 vBeam){return v6He.Angle(vBeam)*TMath::RadToDeg();}, {"v6He", "vBeam"})
 						.Define("tarCut1", "tarVertex.X()>vCut[mX1] && tarVertex.X()<vCut[X1] && tarVertex.Y()>vCut[mY1] && tarVertex.Y()<vCut[Y1]")
 						.Define("tarCut2", "tarVertex.X()>vCut[mX2] && tarVertex.X()<vCut[X2] && tarVertex.Y()>vCut[mY2] && tarVertex.Y()<vCut[Y2]")
 						.Define("tarCut3", "tarVertex.X()>vCut[mX3] && tarVertex.X()<vCut[X3] && tarVertex.Y()>vCut[mY3] && tarVertex.Y()<vCut[Y3]");
@@ -937,14 +1136,14 @@ void realDataAnalyzerDT()
 	parameters[sTarPos] = 10.0;
 	parameters[sLang1] = 0.0;
 	parameters[sLang2] = 0.0;
-	parameters[sLang3] = -1.0;
+	parameters[sLang3] = 0.0;
 	parameters[sRang] = 0.0;
-	parameters[sDistL] = -15.0;
-	parameters[sDistR] = -25.0;
+	parameters[sDistL] = -20.0;
+	parameters[sDistR] = -30.0;
 
 	tarPos[0] = parameters[sTarPos];
 	tarPos[1] = parameters[sTarPos];
-	tarPos[2] = parameters[sTarPos] + 2.0;
+	tarPos[2] = parameters[sTarPos] - 2.0;
 
 	tarAngle[0] = 45.0 * TMath::DegToRad();
 	tarAngle[1] = 6.0 * TMath::DegToRad();
@@ -977,13 +1176,13 @@ void realDataAnalyzerDT()
 
 						.Define("v2H", "leftGlobVertex-tarVertex")
 						.Define("v6He", "rightGlobVertex-tarVertex")
-						.Define("sqlang", [](TVector3 v2H, TVector3 vBeam){return v2H.Angle(vBeam)*TMath::RadToDeg();}, {"v2H", "vBeam"})
-						.Define("sqrang", [](TVector3 v6He, TVector3 vBeam){return v6He.Angle(vBeam)*TMath::RadToDeg();}, {"v6He", "vBeam"})
+						.Redefine("sqlang", [](TVector3 v2H, TVector3 vBeam){return v2H.Angle(vBeam)*TMath::RadToDeg();}, {"v2H", "vBeam"})
+						.Redefine("sqrang", [](TVector3 v6He, TVector3 vBeam){return v6He.Angle(vBeam)*TMath::RadToDeg();}, {"v6He", "vBeam"})
 						.Define("dtCM", getCMAngleDT, {"sqrang", "lvBeam"})
 						.Define("tarCut", "tarVertex.X()>vCut[mX2] && tarVertex.X()<vCut[X2] && tarVertex.Y()>vCut[mY2] && tarVertex.Y()<vCut[Y2]");
 
 	TString dtHistoName = "real_dt";
-	auto dtDF = newDF.Filter("tarCut && sqlde<20 && sqlde>5 && dtGlob && dtLEneRAng && dtLEneLAng").Cache<Double_t, TVector3>({"dtCM", "tarVertex"});
+	auto dtDF = newDF.Filter("tarCut").Filter("sumCut").Cache<Double_t, TVector3>({"dtCM", "tarVertex"});
 	auto dtCMHist = dtDF.Filter("1").Histo1D({dtHistoName.Data(), "Real dt reaction", 90,0,180}, {"dtCM"});
 
 	TFile histOutputFile("/home/zalewski/Desktop/6He/analysis/dataOut_dt/realDataCMHisto.root", "UPDATE");
@@ -1080,40 +1279,44 @@ void modifiedAnalysis()
 	ROOT::EnableImplicitMT();
 	TStopwatch *stopwatch = new TStopwatch();
 	verbosity=false;
+	saveHistogram = true;
 	loadCutsCorrectionParameters();
 
 	//makeSmallFile();
-	realDataAnalyzer();
+	
 	//MCDataAnalyzer();
 	//realDataAnalyzerDT();
-	//calculateEfficiencyDT();
-	//calculateXsectionDT();
-	//makeGraphDT();
+	calculateEfficiencyDT();
+	calculateXsectionDT();
+	makeGraphDT();
+
+
 
 	//geo, mass
 
+	//realDataAnalyzer();
 /*
-	calculateEfficiency(1,1);
-	calculateEfficiency(2,1);
-	calculateEfficiency(3,1);
+	calculateEfficiency(geo1, protium);
+	calculateEfficiency(geo2, protium);
+	calculateEfficiency(geo3, protium);
 
-	calculateEfficiency(1,2);
-	calculateEfficiency(2,2);
-	calculateEfficiency(3,2);
+	calculateEfficiency(geo1, deuterium);
+	calculateEfficiency(geo2, deuterium);
+	calculateEfficiency(geo3, deuterium);
 
 
-	calculateXsection(geo1, protium, 1e-3*1.1, 0.3);
-	calculateXsection(geo2, protium, 1e-4*2.893, 0.3);
-	calculateXsection(geo3, protium, 1e-4*1.127, 0.3);
+	calculateXsection(geo1, protium, 1e-3*1.484, 0.0);
+	calculateXsection(geo2, protium, 1e-4*3.514, 0.0);
+	calculateXsection(geo3, protium, 1e-4*1.392, 0.0);
 
-	calculateXsection(geo1, deuterium, 1e-4*4.611, 0.3);
-	calculateXsection(geo2, deuterium, 1e-4*1.312, 0.3);
-	calculateXsection(geo3, deuterium, 1e-5*4.223, 0.3);
+	calculateXsection(geo1, deuterium, 1e-4*5.32, 0.0);
+	calculateXsection(geo2, deuterium, 1e-4*1.514, 0.0);
+	calculateXsection(geo3, deuterium, 1e-5*3.805, 0.0);
 
-	saveHistogram = true;
+	
 	makeGraph();
-
-
+*/
+/*
 	getAngleError(geo1, protium);
 	getAngleError(geo2, protium);
 	getAngleError(geo3, protium);
@@ -1121,5 +1324,13 @@ void modifiedAnalysis()
 	getAngleError(geo1, deuterium);
 	getAngleError(geo2, deuterium);
 	getAngleError(geo3, deuterium);
+
+	getStatisticalError(geo1, protium);
+	getStatisticalError(geo2, protium);
+	getStatisticalError(geo3, protium);
+
+	getStatisticalError(geo1, deuterium);
+	getStatisticalError(geo2, deuterium);
+	getStatisticalError(geo3, deuterium);
 */
 }

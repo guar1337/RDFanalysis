@@ -1,7 +1,7 @@
-#include "/home/zalewski/aku/analysis/ui.hh"
+#include "/home/zalewski/aku_dec/analysis/ui.hh"
 
 R__LOAD_LIBRARY(libgsl.so);
-R__LOAD_LIBRARY(/home/zalewski/aku/ELC/build/libEloss.so);
+R__LOAD_LIBRARY(/home/zalewski/aku_dec/ELC/build/libEloss.so);
 //R__LOAD_LIBRARY(/home/zalewski/aku/TELoss/libTELoss.so);
 Bool_t flag=true;
 
@@ -45,13 +45,64 @@ void joinDE()
 {
 	TChain dEChain("analyzed");
 	dEChain.Add("/home/zalewski/dataTmp/dE/geo1/dE_geo1.root");
-	//dEChain.Add("/home/zalewski/dataTmp/dE/geo2/dE_geo2.root");
-	//dEChain.Add("/home/zalewski/dataTmp/dE/geo3/dE_geo3.root");
+	dEChain.Add("/home/zalewski/dataTmp/dE/geo2/dE_geo2.root");
+	dEChain.Add("/home/zalewski/dataTmp/dE/geo3/dE_geo3.root");
 
 	ROOT::RDataFrame dEDF(dEChain);
 	dEDF.Snapshot("analyzed", "/home/zalewski/dataTmp/dE/dE_geo.root");
 
 }
+
+//d,p reaction
+Double_t getDPLang(Double_t m_thetaCM, TLorentzVector m_lvBeam)
+{
+	Double_t m_Q = 0.0;
+	TLorentzVector m_lv6He(m_lvBeam);
+	TLorentzVector m_lv2H(0.0,0.0,0,cs::mass2H);
+	TLorentzVector m_lvCM = m_lv6He+m_lv2H;
+	TVector3 m_boostVect = m_lvCM.BoostVector();
+	m_lv2H.Boost(-m_boostVect);
+	m_lv6He.Boost(-m_boostVect);
+
+	Double_t m_Ecm = m_lv2H.E() + m_lv6He.E();
+	Double_t m_finTcm = m_Ecm - (cs::mass6He + cs::mass2H) + m_Q;
+
+	Double_t m_cm1HkinE = m_finTcm*(m_finTcm+2*cs::mass7He)/(2.0*m_Ecm);
+	Double_t m_cm1Hene = m_cm1HkinE + cs::mass1H;
+	Double_t m_cm1Hmom = sqrt(m_cm1Hene*m_cm1Hene - cs::mass1H*cs::mass1H);
+
+	TLorentzVector m_lv1H(0.0,0.0,m_cm1Hmom, m_cm1Hene);
+	m_lv1H.SetTheta(m_thetaCM);
+	m_lv1H.Boost(m_boostVect);
+
+	return m_lv1H.Angle(m_lvBeam.Vect())*TMath::RadToDeg();
+}
+
+Double_t getDPRang(Double_t m_thetaCM, TLorentzVector m_lvBeam)
+{
+	Double_t m_Q = 0.0;
+	TLorentzVector m_lv6He(m_lvBeam);
+	TLorentzVector m_lv2H(0.0,0.0,0,cs::mass2H);
+	TLorentzVector m_lvCM = m_lv6He+m_lv2H;
+	TVector3 m_boostVect = m_lvCM.BoostVector();
+	m_lv2H.Boost(-m_boostVect);
+	m_lv6He.Boost(-m_boostVect);
+
+	Double_t m_Ecm = m_lv2H.E() + m_lv6He.E();
+	Double_t m_finTcm = m_Ecm - (cs::mass6He + cs::mass2H) + m_Q;
+
+	Double_t m_cm7HekinE = m_finTcm*(m_finTcm+2*cs::mass2H)/(2.0*m_Ecm);
+	Double_t m_cm7Heene = m_cm7HekinE + cs::mass7He;
+	Double_t m_cm7Hemom = sqrt(m_cm7Heene*m_cm7Heene - cs::mass7He*cs::mass7He);
+
+	TLorentzVector m_lv7He(0.0,0.0,m_cm7Hemom, m_cm7Heene);
+
+	m_lv7He.SetTheta(TMath::Pi() - m_thetaCM);
+	m_lv7He.Boost(m_boostVect);
+	return m_lv7He.Angle(m_lvBeam.Vect())*TMath::RadToDeg();
+}
+
+
 //d,t reaction
 Double_t getDTLang(Double_t m_thetaCM, TLorentzVector m_lvBeam, Double_t m_Q)
 {
@@ -275,8 +326,8 @@ Double_t getPPLang(Double_t m_thetaCM, TLorentzVector m_lvBeam)
 
 	//m_lv6He.Boost(m_boostVect);
 	m_lv1H.Boost(m_boostVect);
-	Double_t m_sqlangpp = 180.0 * (m_lvBeam.Angle(m_lv1H.Vect()))/double(TMath::Pi());
-	//Double_t m_sqrangpp = 180.0 * (m_lvBeam.Angle(m_lv6He.Vect()))/double(TMath::Pi());
+	Double_t m_sqlangpp = m_lvBeam.Angle(m_lv1H.Vect())*TMath::RadToDeg();
+	//Double_t m_sqrangpp = m_lvBeam.Angle(m_lv6He.Vect())*TMath::RadToDeg();
 	return m_sqlangpp;
 }
 
@@ -296,8 +347,8 @@ Double_t getPPRang(Double_t m_thetaCM, TLorentzVector m_lvBeam)
 
 	m_lv6He.Boost(m_boostVect);
 	//m_lv1H.Boost(m_boostVect);
-	//Double_t m_sqlangpp = 180.0 * (m_lvBeam.Angle(m_lv1H.Vect()))/double(TMath::Pi());
-	Double_t m_sqrangpp = 180.0 * (m_lvBeam.Angle(m_lv6He.Vect()))/double(TMath::Pi());
+	//Double_t m_sqlangpp = m_lvBeam.Angle(m_lv1H.Vect())*TMath::RadToDeg();
+	Double_t m_sqrangpp = m_lvBeam.Angle(m_lv6He.Vect())*TMath::RadToDeg();
 	return m_sqrangpp;
 }
 
@@ -317,7 +368,7 @@ Double_t getDDRang(Double_t m_thetaCM, TLorentzVector m_lvBeam)
 
 	m_lv6He.Boost(m_boostVect);
 	//m_lv2H.Boost(m_boostVect);
-	//Double_t m_sqlangdd = 180.0 * (m_lvBeam.Angle(m_lv2H.Vect()))/double(TMath::Pi());
+	//Double_t m_sqlangdd = m_lvBeam.Angle(m_lv2H.Vect())*TMath::RadToDeg();
 	Double_t m_sqrangdd = m_lvBeam.Angle(m_lv6He.Vect())*TMath::RadToDeg();
 	return m_sqrangdd;
 }
@@ -358,7 +409,7 @@ Double_t getEnePP(Double_t m_thetaCM, TLorentzVector m_lvBeam)
 	//m_lv6He.Boost(m_boostVect);
 	m_lv1H.Boost(m_boostVect);
 	Double_t m_sqlEpp = m_lv1H.E()-cs::mass1H;
-	//Double_t m_sqrangpp = 180.0 * (m_lvBeam.Angle(m_lv6He.Vect()))/double(TMath::Pi());
+	//Double_t m_sqrangpp = m_lvBeam.Angle(m_lv6He.Vect())*TMath::RadToDeg();
 	return m_sqlEpp;
 }
 
@@ -378,7 +429,7 @@ Double_t getEneDD(Double_t m_thetaCM, TLorentzVector m_lvBeam)
 	//m_lv6He.Boost(m_boostVect);
 	m_lv2H.Boost(m_boostVect);
 	Double_t m_sqlEdd = m_lv2H.E()-cs::mass2H;
-	//Double_t m_sqrangdd = 180.0 * (m_lvBeam.Angle(m_lv6He.Vect()))/double(TMath::Pi());
+	//Double_t m_sqrangdd = m_lvBeam.Angle(m_lv6He.Vect())*TMath::RadToDeg();
 	return m_sqlEdd;
 }
 
@@ -499,7 +550,13 @@ TLorentzVector getLV4He(Double_t m_sqrde, Double_t m_sqretot, TVector3 m_v4He)
 	return TLorentzVector(m_v4He, m_ene4He);
 }
 
-
+TLorentzVector getLV5He(Double_t m_sqrde, Double_t m_sqretot, TVector3 m_v5He)
+{
+	Double_t m_ene5He = m_sqrde + m_sqretot + cs::mass5He;
+	Double_t m_mom5He = sqrt(m_ene5He*m_ene5He - cs::mass5He*cs::mass5He);
+	m_v5He.SetMag(m_mom5He);
+	return TLorentzVector(m_v5He, m_ene5He);
+}
 
 Double_t getCMAngleDT(Double_t m_sqrang, TLorentzVector m_lvBeam)
 {
@@ -635,7 +692,7 @@ Double_t getMissingMass3H(TLorentzVector m_lv3H, TLorentzVector m_lvBeam)
 		flag=false;
 	}
 	TLorentzVector m_lv6He = (m_lvBeam + m_lvTar) - m_lv3H;
-	return m_lv6He.M() - cs::mass4He;
+	return m_lv6He.M() - cs::mass5He;
 }
 
 Double_t getMissingMass4He(TLorentzVector m_lv4He, TLorentzVector m_lvBeam)
@@ -650,6 +707,17 @@ Double_t getMissingMass4He(TLorentzVector m_lv4He, TLorentzVector m_lvBeam)
 	return m_lv3H.M() - cs::mass3H;
 }
 
+Double_t getMissingMassN(TLorentzVector m_lv4He, TLorentzVector m_lv3H, TLorentzVector m_lvBeam)
+{
+	TLorentzVector m_lvTar(0.0, 0.0, 0.0, cs::mass2H);
+	if (flag)
+	{
+		printf("m2H: %f\tm6He: %f\n", m_lv4He.M(), m_lvBeam.M());
+		flag=false;
+	}
+	TLorentzVector m_neutron = (m_lvBeam + m_lvTar) - (m_lv4He + m_lv3H);
+	return m_neutron.M() - cs::massN;
+}
 
 Double_t inelSQLang2H_18(Double_t m_thetaCM, TLorentzVector m_lvBeam)
 {
@@ -944,6 +1012,14 @@ Double_t getKineticEnergy(Double_t m_tof)
 {
 	Double_t m_beta_squared= pow((cs::tofBase/m_tof)/cs::c, 2.0);
 	Double_t m_gamma=1.0/sqrt(1.0-m_beta_squared);	
+	return he6_Si->GetE(cs::mass6He*(m_gamma-1.0), beamDeadLayer-20.0/cos(TMath::PiOver4()));
+	//return cs::mass6He*(m_gamma-1.0);
+}
+
+Double_t getRawKineticEnergy(Double_t m_tof)
+{
+	Double_t m_beta_squared= pow((cs::tofBase/m_tof)/cs::c, 2.0);
+	Double_t m_gamma=1.0/sqrt(1.0-m_beta_squared);	
 	return he6_Si->GetE(cs::mass6He*(m_gamma-1.0), beamDeadLayer+20.0/cos(TMath::PiOver4()));
 	//return cs::mass6He*(m_gamma-1.0);
 }
@@ -1146,7 +1222,7 @@ bool filterToF(ROOT::VecOps::RVec<unsigned short> &timeF3, ROOT::VecOps::RVec<un
 	Double_t tF3 = ((timeF3[0]+timeF3[1]+timeF3[2]+timeF3[3])/4.0);
 	Double_t tF5 = ((timeF5[0]+timeF5[1])/2.0);
 	Double_t ToF = (tF5-tF3)*tdcBinning+ToFconstant;
-	return (ToF>160 && ToF<182);
+	return (ToF>165 && ToF<182);
 }
 
 Double_t calculateToF(ROOT::VecOps::RVec<unsigned short> &timeF3, ROOT::VecOps::RVec<unsigned short> &timeF5)
@@ -1159,9 +1235,9 @@ Double_t calculateToF(ROOT::VecOps::RVec<unsigned short> &timeF3, ROOT::VecOps::
 
 ROOT::RDF::RNode ApplyGraphicalCuts(ROOT::RDF::RNode df, Int_t cutsType)
 {
-	if (cutsType==elastic || cutsType==all)
+	if (cutsType==elastic)
 	{
-		TFile cutgFile("/home/zalewski/aku/analysis/gcuts.root","READ");
+		TFile cutgFile("/home/zalewski/aku_dec/analysis/gcuts.root","READ");
 		GCutHe4 = (TCutG*)cutgFile.Get("dehe4");
 		GCutHe6 = (TCutG*)cutgFile.Get("dehe6");
 		GCutP = (TCutG*)cutgFile.Get("p");
@@ -1174,24 +1250,41 @@ ROOT::RDF::RNode ApplyGraphicalCuts(ROOT::RDF::RNode df, Int_t cutsType)
 		GCtimeCutR = (TCutG*)cutgFile.Get("timeCutR");
 		GCtimeCutL = (TCutG*)cutgFile.Get("timeCutL");
 
+		TFile dtCutFile("/home/zalewski/aku_dec/analysis/dtCutFile.root","READ");
+		GCutHe4 = (TCutG*)dtCutFile.Get("dehe4");
+		GCutdtLeneLang = (TCutG*)dtCutFile.Get("dtLeneLang");
+		GCutdtLeneRang = (TCutG*)dtCutFile.Get("dtLeneRang");		
+		GCnoProtDeut = (TCutG*)dtCutFile.Get("noProtDeut");
+		GCutdtEneEne = (TCutG*)dtCutFile.Get("dtEneEne");
+		GCutdtAngAng = (TCutG*)dtCutFile.Get("dtAngAng");
+		GCbHe6 = (TCutG*)dtCutFile.Get("bHe6");
+		GCdtTT = (TCutG*)dtCutFile.Get("dtTT");
+		GCdtLTl = (TCutG*)dtCutFile.Get("dtLTl");
+		GCdtLTr = (TCutG*)dtCutFile.Get("dtLTr");
+		GCdtRTl = (TCutG*)dtCutFile.Get("dtRTl");
+		GCdtRTr = (TCutG*)dtCutFile.Get("dtRTr");
+		GCdts1 = (TCutG*)dtCutFile.Get("dts1");
+		GCdts2 = (TCutG*)dtCutFile.Get("dts2");
+
 		return df.Define("he4", [](Double_t sqretot, Double_t sqrde){return GCutHe4->IsInside(sqretot,sqrde);}, {"sqretot","sqrde"})
 				 .Define("he6", [](Double_t sqretot, Double_t sqrde){return GCutHe6->IsInside(sqretot,sqrde);}, {"sqretot","sqrde"})
 				 .Define("p", [](Double_t sqletot, Double_t sqlde){return GCutP->IsInside(sqletot,sqlde);}, {"sqletot","sqlde"})
 				 .Define("d", [](Double_t sqletot, Double_t sqlde){return GCutD->IsInside(sqletot,sqlde);}, {"sqletot","sqlde"})
 				 .Define("t", [](Double_t sqletot, Double_t sqlde){return GCutT->IsInside(sqletot,sqlde);}, {"sqletot","sqlde"})
-				 //.Define("beamCut", "aF5<1200 && tof>160.0 && tof<180.0")
 				 .Define("angAngPP", [](Double_t sqrang, Double_t sqlang){return GCutangAngPP->IsInside(sqrang,sqlang);}, {"sqrang","sqlang"})
 				 .Define("angAngDD", [](Double_t sqrang, Double_t sqlang){return GCutangAngDD->IsInside(sqrang,sqlang);}, {"sqrang","sqlang"})
 				 .Define("langEPP", [](Double_t sqletot, Double_t sqlde, Double_t sqlang){return GCutlangEPP->IsInside(sqlang, sqletot+sqlde);}, {"sqletot","sqlde", "sqlang"})
 				 .Define("langEDD", [](Double_t sqletot, Double_t sqlde, Double_t sqlang){return GCutlangEDD->IsInside(sqlang, sqletot+sqlde);}, {"sqletot","sqlde", "sqlang"})
-				 .Define("pp", "he6 && angAngPP && langEPP")
-				 .Define("dd", "he6 && angAngDD && langEDD")
+				 .Define("timeCutR", [](Int_t sqrtime, ROOT::RVec<unsigned short> &tdcF5){return GCtimeCutR->IsInside(sqrtime, tdcF5[0]-sqrtime);}, {"sqrtime", "tdcF5"})
+				 .Define("timeCutL", [](Int_t sqltime, ROOT::RVec<unsigned short> &tdcF5){return GCtimeCutL->IsInside(sqltime, tdcF5[0]-sqltime);}, {"sqltime", "tdcF5"})
+				 .Define("pp", "he6 && angAngPP && langEPP && timeCutL && timeCutR")
+				 .Define("dd", "he6 && angAngDD && langEDD && timeCutL && timeCutR")
 				 .Define("sumCut", "pp||dd");
 	}
 	
-	if (cutsType==MC || cutsType==all)
+	else if (cutsType==MC)
 	{
-		TFile MCcutgFile("/home/zalewski/aku/analysis/mcCuts.root","READ");
+		TFile MCcutgFile("/home/zalewski/aku_dec/analysis/mcCuts.root","READ");
 		GCutmcHe6 = (TCutG*)MCcutgFile.Get("mcHe6");
 		GCutmcPPAngAng = (TCutG*)MCcutgFile.Get("mcPPAngAng");
 		GCutmcPPLeneLang = (TCutG*)MCcutgFile.Get("mcPPLeneLang");
@@ -1207,35 +1300,60 @@ ROOT::RDF::RNode ApplyGraphicalCuts(ROOT::RDF::RNode df, Int_t cutsType)
 				 .Define("sumCut", "mcPP || mcDD");
 	}
 
-	if (cutsType==MC || cutsType==all)
+	else if (cutsType==dt)
 	{
-		TFile dtCutFile("/home/zalewski/aku/analysis/dtCutFile.root","READ");
-		GCutdtLEneLAng = (TCutG*)dtCutFile.Get("dtLEneLAng");
-		GCutdtLEneRAng = (TCutG*)dtCutFile.Get("dtLEneRAng");		
+		TFile dtCutFile("/home/zalewski/aku_dec/analysis/dtCutFile.root","READ");
+		GCutHe4 = (TCutG*)dtCutFile.Get("dehe4");
+		GCutdtLeneLang = (TCutG*)dtCutFile.Get("dtLeneLang");
+		GCutdtLeneRang = (TCutG*)dtCutFile.Get("dtLeneRang");		
 		GCnoProtDeut = (TCutG*)dtCutFile.Get("noProtDeut");
+		GCutdtEneEne = (TCutG*)dtCutFile.Get("dtEneEne");
+		GCutdtAngAng = (TCutG*)dtCutFile.Get("dtAngAng");
 		GCbHe6 = (TCutG*)dtCutFile.Get("bHe6");
 		GCdtTT = (TCutG*)dtCutFile.Get("dtTT");
-		GCdtLT1 = (TCutG*)dtCutFile.Get("dtLT1");
-		GCdtLT2 = (TCutG*)dtCutFile.Get("dtLT2");
+		GCdtLTl = (TCutG*)dtCutFile.Get("dtLTl");
+		GCdtLTr = (TCutG*)dtCutFile.Get("dtLTr");
+		GCdtRTl = (TCutG*)dtCutFile.Get("dtRTl");
+		GCdtRTr = (TCutG*)dtCutFile.Get("dtRTr");
 		GCdts1 = (TCutG*)dtCutFile.Get("dts1");
 		GCdts2 = (TCutG*)dtCutFile.Get("dts2");
-		GCdts3 = (TCutG*)dtCutFile.Get("dts3");
-		GCdts4 = (TCutG*)dtCutFile.Get("dts4");
+		GCdtmm3H_N = (TCutG*)dtCutFile.Get("dt_mm3H_mmN");
+		GCdtmm4He_N = (TCutG*)dtCutFile.Get("dt_mm4He_mmN");
 
 		return df.Define("he4", [](Double_t sqretot, Double_t sqrde){return GCutHe4->IsInside(sqretot,sqrde);}, {"sqretot","sqrde"})
-				 .Define("dtLEneLAng", [](Double_t sqlang, Double_t sqlde, Double_t sqletot){return GCutdtLEneLAng->IsInside(sqlang, sqlde+sqletot);}, {"sqlang", "sqlde", "sqletot"})
-				 .Define("dtLEneRAng", [](Double_t sqrang, Double_t sqlde, Double_t sqletot){return GCutdtLEneRAng->IsInside(sqrang, sqlde+sqletot);}, {"sqrang", "sqlde", "sqletot"})
+				 .Define("dtLeneLang", [](Double_t sqlang, Double_t sqlde, Double_t sqletot){return GCutdtLeneLang->IsInside(sqlang, sqlde+sqletot);}, {"sqlang", "sqlde", "sqletot"})
+				 .Define("dtLeneRang", [](Double_t sqrang, Double_t sqlde, Double_t sqletot){return GCutdtLeneRang->IsInside(sqrang, sqlde+sqletot);}, {"sqrang", "sqlde", "sqletot"})
+				 .Define("dtAngAng", [](Double_t sqrang, Double_t sqlang){return GCutdtAngAng->IsInside(sqrang, sqlang);}, {"sqrang", "sqlang"})
+				 .Define("dtEneEne", [](Double_t sqlde, Double_t sqletot, Double_t sqrde, Double_t sqretot){return GCutdtEneEne->IsInside(sqlde+sqletot, sqrde+sqretot);}, 
+				 																													{"sqlde", "sqletot", "sqrde", "sqretot"})
 				 .Define("noProtDeut", [](Double_t sqlde, Double_t sqletot){return (!GCnoProtDeut->IsInside(sqletot, sqlde));}, {"sqlde", "sqletot"})
 				 .Define("dtTT", [](int sqrtime, int sqltime){return GCdtTT->IsInside(sqrtime, sqltime);}, {"sqrtime", "sqltime"})
 				 .Define("bHe6", [](Double_t tof, Double_t aF5){return (GCbHe6->IsInside(tof, aF5) ||  (aF5==0 && tof>168 && tof<181));}, {"tof", "aF5"})
-				 .Define("dtLT1", [](ROOT::RVec<unsigned short> &tdcF5, int sqltime){return GCdtLT1->IsInside((tdcF5[0]-sqltime), sqltime);}, {"tdcF5", "sqltime"})
-				 .Define("dtLT2", [](ROOT::RVec<unsigned short> &tdcF5, int sqltime){return GCdtLT2->IsInside((tdcF5[0]-sqltime), sqltime);}, {"tdcF5", "sqltime"})
-				 .Define("dts1", [](Double_t sqrang, Double_t sqrde, Double_t sqretot){return !GCdts1->IsInside(sqrang, sqrde+sqretot);}, {"sqrang", "sqrde", "sqretot"})
-				 .Define("dts2", [](ROOT::RVec<unsigned short> &tdcF5, int sqrtime){return !GCdts2->IsInside((tdcF5[0]-sqrtime), sqrtime);}, {"tdcF5", "sqrtime"})
-				 .Define("dts3", [](ROOT::RVec<unsigned short> &tdcF5, int sqrtime){return !GCdts3->IsInside((tdcF5[0]-sqrtime), sqrtime);}, {"tdcF5", "sqrtime"})
-				 .Define("dts4", [](Double_t sqlang, Double_t sqlde){return !GCdts4->IsInside(sqlang, sqlde);}, {"sqlang", "sqlde"})
-				 .Define("sumCut", "noProtDeut && dtTT && bHe6 && (dtLT1 || dtLT2) && dts1 && dts2 && dts3 && dts4");
+				 .Define("dtLTl", [](ROOT::RVec<unsigned short> &tdcF5, int sqltime){return GCdtLTl->IsInside(tdcF5[0]-sqltime, sqltime);}, {"tdcF5", "sqltime"})
+				 .Define("dtLTr", [](ROOT::RVec<unsigned short> &tdcF5, int sqltime){return GCdtLTr->IsInside(tdcF5[0]-sqltime, sqltime);}, {"tdcF5", "sqltime"})
+				 .Define("dtRTl", [](ROOT::RVec<unsigned short> &tdcF5, int sqrtime){return GCdtRTl->IsInside(tdcF5[0]-sqrtime, sqrtime);}, {"tdcF5", "sqrtime"})
+				 .Define("dtRTr", [](ROOT::RVec<unsigned short> &tdcF5, int sqrtime){return GCdtRTr->IsInside(tdcF5[0]-sqrtime, sqrtime);}, {"tdcF5", "sqrtime"})
+				 .Define("timeCut","(dtLTl || dtLTr) && (dtRTl || dtRTr)")
+				 .Define("dts2", [](Double_t sqlang, Double_t sqlde){return GCdts2->IsInside(sqlang, sqlde);}, {"sqlang", "sqlde"})
+				 .Define("dtmm3H_N", [](Double_t mm3H, Double_t mmN){return GCdtmm3H_N->IsInside(mm3H, mmN);}, {"mm3H", "mmN"})
+				 .Define("dtmm4He_N", [](Double_t mm4He, Double_t mmN){return GCdtmm4He_N->IsInside(mm4He, mmN);}, {"mm4He", "mmN"})
+				 .Define("shortcut", "he4 && noProtDeut && dtTT && bHe6 && timeCut && sqlde<23")
+				 .Define("sumCut", "he4 && noProtDeut && dtTT && timeCut && bHe6 && sqlde<23 && dtmm3H_N && dtmm4He_N && dtAngAng");
 	}
+
+	else if (cutsType==mcDT)
+	{
+		TFile dtCutFile("/home/zalewski/aku_dec/analysis/dtCutFile.root","READ");
+		GCmcHe4 = (TCutG*)dtCutFile.Get("mcHe4");
+		GCmcLeneLang = (TCutG*)dtCutFile.Get("mcLeneLang");
+		GCutdtAngAng = (TCutG*)dtCutFile.Get("dtAngAng");
+
+		return df.Define("mcHe4", [](Double_t sqretot, Double_t sqrde){return GCmcHe4->IsInside(sqretot, sqrde);}, {"sqretot", "sqrde"})
+				 .Define("dtAngAng", [](Double_t sqrang, Double_t sqlang){return GCutdtAngAng->IsInside(sqrang, sqlang);}, {"sqrang", "sqlang"})
+				 .Define("mcLeneLang", [](Double_t sqlang, Double_t sqlde, Double_t sqletot){return GCmcLeneLang->IsInside(sqlang, sqlde+sqletot);}, {"sqlang", "sqlde", "sqletot"});
+	}
+	
+	else return df;
 }
 
 bool filterSQ(ROOT::VecOps::RVec<unsigned short> &SQ, Double_t threshold)
@@ -1374,11 +1492,12 @@ void cleaner(TString inFileName)
 						.Filter(filterMWPC(1),{"y1","ny1"})
 						.Filter(filterMWPC(2),{"x2","nx2"})
 						.Filter(filterMWPC(3),{"y2","ny2"})
-						.Filter(filterToF,{"tdcF3", "tdcF5"})
-						.Filter([sqlThreshold](ROOT::VecOps::RVec<unsigned short> &SQX_L){return filterSQ(SQX_L, sqlThreshold);},{"SQX_L"})
-						.Filter([sqrThreshold](ROOT::VecOps::RVec<unsigned short> &SQX_R){return filterSQ(SQX_R, sqrThreshold);},{"SQX_R"});
+						//.Filter(filterToF,{"tdcF3", "tdcF5"})
+						//.Filter([sqlThreshold](ROOT::VecOps::RVec<unsigned short> &SQX_L){return filterSQ(SQX_L, sqlThreshold);},{"SQX_L"})
+						//.Filter([sqrThreshold](ROOT::VecOps::RVec<unsigned short> &SQX_R){return filterSQ(SQX_R, sqrThreshold);},{"SQX_R"})
+						.Define("tof", calculateToF, {"tdcF3", "tdcF5"});
 
-	outDF.Snapshot("cleaned", outFilename.Data());
+	outDF.Snapshot("cleaned", "/home/zalewski/Desktop/6He/thesis/cal_geo1wToF.root"/*outFilename.Data()*/);
 }
 
 struct Calibrator
@@ -1450,8 +1569,6 @@ void analysis(TString inFileName, Int_t geoID=0)
 	TString outFilename = inFileName.ReplaceAll("cal","dE").ReplaceAll("mc","mc_out");
 	std::cout<<"Analysing "<<inFileName<<std::endl;
 
-	//load Graphical cuts
-
 	h1_Si = new ELC(1, 1, si_Nel, 2.33, si_A, si_Z, si_W, 200.,3000);
 	h2_Si = new ELC(2, 1, si_Nel, 2.33, si_A, si_Z, si_W, 200.,3000);
 	h3_Si = new ELC(3, 1, si_Nel, 2.33, si_A, si_Z, si_W, 200.,3000);
@@ -1489,10 +1606,7 @@ void analysis(TString inFileName, Int_t geoID=0)
 	siEloss6He.SetDeltaEtab(1500);
 */
 	Double_t qDT_45 = cs::Qdt;
-	Double_t qDT_0 = 0.0;
-
 	Double_t qPT_75 = cs::Qpt;
-	Double_t qPT_0 = 0.0;
 
 	parameters[sMWPC_1_X] = -1.0;
 	parameters[sMWPC_1_Y] = -2.1375;
@@ -1503,17 +1617,12 @@ void analysis(TString inFileName, Int_t geoID=0)
 	parameters[sLang2] = 0.0;
 	parameters[sLang3] = 0.0;
 	parameters[sRang] = 0.0;
-	if (geoID==3 || (geoID==0 && cs::runNo==3))
-	{
-		parameters[sRang] = -1.0;
-	}
-	
 	parameters[sDistL] = -20.0;
 	parameters[sDistR] = -30.0;
 
 	tarPos[0] = parameters[sTarPos];
 	tarPos[1] = parameters[sTarPos];
-	tarPos[2] = parameters[sTarPos];
+	tarPos[2] = parameters[sTarPos]-2.0;
 
 	tarAngle[0] = 45.0 * TMath::DegToRad();
 	tarAngle[1] = 6.0 * TMath::DegToRad();
@@ -1578,10 +1687,12 @@ void analysis(TString inFileName, Int_t geoID=0)
 					 .Define("lv2H", getLV2H, {"sqlde", "sqletot", "v2H"})
 					 .Define("lv3H", getLV3H, {"sqlde", "sqletot", "v2H"})
 					 .Define("lv4He", getLV4He, {"sqrde", "sqretot", "v6He"})
+					 .Define("lv5He", getLV5He, {"sqrde", "sqretot", "v6He"})
 					 .Define("mm1H", getMissingMass1H, {"lv1H", "lvBeam"})
 					 .Define("mm2H", getMissingMass2H, {"lv2H", "lvBeam"})
-					 .Define("mm3H", getMissingMass3H, {"lv2H", "lvBeam"})
+					 .Define("mm3H", getMissingMass3H, {"lv3H", "lvBeam"})
 					 .Define("mm4He", getMissingMass4He, {"lv4He", "lvBeam"})
+					 .Define("mmN", getMissingMassN, {"lv4He", "lv3H", "lvBeam"})
 					 .Define("mc1H", getCMAngle1H, {"sqlang", "lvBeam"})
 					 .Define("mc2H", getCMAngle2H, {"sqlang", "lvBeam"})
 					 .Define("dtCM", getCMAngleDT, {"sqrang", "lvBeam"})
@@ -1596,46 +1707,41 @@ void analysis(TString inFileName, Int_t geoID=0)
 					 .Define("sqlangdd", getDDLang, {"thetaCM","lvBeam"})
 					 .Define("sqrangdd", getDDRang, {"thetaCM","lvBeam"})
 					 .Define("sqledd", getEneDD, {"thetaCM","lvBeam"})
+					 .Define("sqlangdp", getDPLang, {"thetaCM","lvBeam"})
+					 .Define("sqrangdp", getDPRang, {"thetaCM","lvBeam"})
 
-					 .Define("sqlangdt_45", [qDT_45](Double_t thetaCM, TLorentzVector lvBeam){return getDTLang(thetaCM, lvBeam, qDT_45);}, {"thetaCM","lvBeam"})
-					 .Define("sqrangdt_45", [qDT_45](Double_t thetaCM, TLorentzVector lvBeam){return getDTRang(thetaCM, lvBeam, qDT_45);}, {"thetaCM","lvBeam"})
-					 .Define("sqlangdt_0", [qDT_0](Double_t thetaCM, TLorentzVector lvBeam){return getDTLang(thetaCM, lvBeam, qDT_0);}, {"thetaCM","lvBeam"})
-					 .Define("sqrangdt_0", [qDT_0](Double_t thetaCM, TLorentzVector lvBeam){return getDTRang(thetaCM, lvBeam, qDT_0);}, {"thetaCM","lvBeam"})
+					 .Define("sqlangdt", [qDT_45](Double_t thetaCM, TLorentzVector lvBeam){return getDTLang(thetaCM, lvBeam, qDT_45);}, {"thetaCM","lvBeam"})
+					 .Define("sqrangdt", [qDT_45](Double_t thetaCM, TLorentzVector lvBeam){return getDTRang(thetaCM, lvBeam, qDT_45);}, {"thetaCM","lvBeam"})
+					 .Define("sqlangpt", [qPT_75](Double_t thetaCM, TLorentzVector lvBeam){return getPTLang(thetaCM, lvBeam, qPT_75);}, {"thetaCM","lvBeam"})
+					 .Define("sqrangpt", [qPT_75](Double_t thetaCM, TLorentzVector lvBeam){return getPTRang(thetaCM, lvBeam, qPT_75);}, {"thetaCM","lvBeam"});
 
-					 .Define("sqlangpt_75", [qPT_75](Double_t thetaCM, TLorentzVector lvBeam){return getPTLang(thetaCM, lvBeam, qPT_75);}, {"thetaCM","lvBeam"})
-					 .Define("sqrangpt_75", [qPT_75](Double_t thetaCM, TLorentzVector lvBeam){return getPTRang(thetaCM, lvBeam, qPT_75);}, {"thetaCM","lvBeam"})
-					 .Define("sqlangpt_0", [qPT_0](Double_t thetaCM, TLorentzVector lvBeam){return getPTLang(thetaCM, lvBeam, qPT_0);}, {"thetaCM","lvBeam"})
-					 .Define("sqrangpt_0", [qPT_0](Double_t thetaCM, TLorentzVector lvBeam){return getPTRang(thetaCM, lvBeam, qPT_0);}, {"thetaCM","lvBeam"});
-
-					auto filteredDF = ApplyGraphicalCuts(outDF, MC);
+					auto filteredDF = ApplyGraphicalCuts(outDF, dt);
 
 	ROOT::RDF::RSnapshotOptions myOpts;
-
+/*
 	//small output file pp && dd
-/*
-	auto smallReal = outDF.Filter("beamCut && (pp || dd || pt)");
 	TString smallRealFname = TString::Format("/home/zalewski/dataTmp/small/geo%d/small%d.root", cs::runNo, cs::runNo);
-	smallReal.Snapshot("smallReal", smallRealFname.Data(), columnList, myOpts);
-*/
+	filteredDF.Snapshot("smallReal", smallRealFname.Data(), columnList, myOpts);
 
-	//small output file dt
+*/
 /*
-	auto smallRealDT = outDF.Filter("he4 && sqlde<20 && dtGlob");
+	//small output file dt
 	TString smallRealFnameDT = "/home/zalewski/dataTmp/small/small_dt.root";
-	smallRealDT.Snapshot("smallRealDT", smallRealFnameDT.Data(), columnList, myOpts);
+	filteredDF.Snapshot("smallRealDT", smallRealFnameDT.Data(), columnListDT);
 */
-
+/*
 	//small elastic MC output file
 	TString smallMCFname = outFilename;
-	filteredDF.Snapshot("smallMC", smallMCFname.ReplaceAll("MC","small").Data(), MCcolumnList);
-/*
-	//small dt MC output file
-	TString smallMCFname = outFilename;
-	filteredDF.Snapshot("smallMC", smallMCFname.ReplaceAll("MC","small").Data(), columnList);
+	filteredDF.Snapshot("smallMC", smallMCFname.ReplaceAll("MC","small").Data(), MCcolumnListLong);
 */
 
+//	//small dt MC output file
+//	TString smallMCFname = outFilename;
+//	filteredDF.Snapshot("smallMC", smallMCFname.ReplaceAll("MC","small").Data()/*, MCcolumnListDT*/);
+
+
 	//full output file
-	//outDF.Snapshot("analyzed", outFilename.Data()/*, smallerTree*/);
+	filteredDF.Snapshot("analyzed", outFilename.Data());
 
 	delete h1_Si;
 	delete h2_Si;
@@ -1679,7 +1785,7 @@ void ui()
 	ROOT::EnableImplicitMT();
 	TStopwatch stopwatch;
 	
-	beamDeadLayer = 550.0;
+	beamDeadLayer = 500.0;
 	ionDeadLayer = 20.0;
 	if (cs::runNo>1)
 	{
@@ -1688,13 +1794,13 @@ void ui()
 	
 
 	rnd = new TRandom3();
-	selector = TSelector::GetSelector("/home/zalewski/aku/analysis/simplifier123.C");
+	selector = TSelector::GetSelector("/home/zalewski/aku_dec/analysis/simplifier123.C");
 	std::cout<<"..."<<std::endl<<".."<<std::endl<<"."<<std::endl;
 
 
 	if (cs::runNo==5)
 	{
-		selector = TSelector::GetSelector("/home/zalewski/aku/analysis/simplifier5.C");
+		selector = TSelector::GetSelector("/home/zalewski/aku_dec/analysis/simplifier5.C");
 	}
 
 	loadCalibrationParameters();
@@ -1706,17 +1812,10 @@ void ui()
 		sourceDir = "/home/zalewski/dataTmp/simp/geo" + std::to_string(cs::runNo) + "/";
 	}
 
-	else if (cs::runNo==10 || cs::runNo==20 || cs::runNo==30)
-	{
-		TString mcFilesPath = "/home/zalewski/dataTmp/MC/geo";
-		TString mcGeoNumber = std::to_string(cs::runNo/10);
-		sourceDir = mcFilesPath.Data() + mcGeoNumber + "/";
-	}
-
 	else
 	{
 		printf("Wrong geometry (geo = %d)\tExiting now.\n", cs::runNo);
-		return 0;
+
 	}
 
 	TSystemDirectory *dir_data = new TSystemDirectory("data",sourceDir.Data());
@@ -1740,24 +1839,24 @@ void ui()
 			TString versionNumber(str_name(7,1));
 			//printf("fName:\t%s\tversionNo: %d\n",str_name.Data(), versionNumber.Atoi());
 			//translator(inputFilePath);
-			//cleaner(inputFilePath);
-			//calibratorCaller(inputFilePath);
-			//analysis(inputFilePath, 1);
+			cleaner(inputFilePath);
+			calibratorCaller(inputFilePath);
+			analysis(inputFilePath, 0);
 			//makeSmallFile();
 		}
 	}
 
 	//loadCorrectionParameters(6);
 
-	analysis("/home/zalewski/dataTmp/MC/v3/mc_geo1_1H_big.root", 1);
-	analysis("/home/zalewski/dataTmp/MC/v3/mc_geo2_1H_big.root", 2);
-	analysis("/home/zalewski/dataTmp/MC/v3/mc_geo3_1H_big.root", 3);
-	analysis("/home/zalewski/dataTmp/MC/v3/mc_geo1_2H_big.root", 1);
-	analysis("/home/zalewski/dataTmp/MC/v3/mc_geo2_2H_big.root", 2);
-	analysis("/home/zalewski/dataTmp/MC/v3/mc_geo3_2H_big.root", 3);
+	//analysis("/home/zalewski/dataTmp/MC/v3/mc_geo1_1H.root", 1);
+	//analysis("/home/zalewski/dataTmp/MC/v3/mc_geo2_1H.root", 2);
+	//analysis("/home/zalewski/dataTmp/MC/v3/mc_geo3_1H.root", 3);
+	//analysis("/home/zalewski/dataTmp/MC/v3/mc_geo1_2H.root", 1);
+	//analysis("/home/zalewski/dataTmp/MC/v3/mc_geo2_2H.root", 2);
+	//analysis("/home/zalewski/dataTmp/MC/v3/mc_geo3_2H.root", 3);
 	
 
-	//analysis("/home/zalewski/dataTmp/MC/v3/mc_geo2_dt_big.root", 1);
+	//analysis("/home/zalewski/dataTmp/MC/v3/mc_geo2_2H_dt.root", 2);
 
 	//joinDE();
 	//miscTranlator();
