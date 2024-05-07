@@ -9,7 +9,7 @@ is used for data translation, pre-cleaning, calibration and analysis. The task i
 	calibratorCaller - calibrates detectors, calcuates ToF and average energy loss in ToF F5
 	analysis - reconstructs reaction vertex, scattering angles in LAB and CM, calculates missing masses of the particles. After applying 1D and 2D cuts, the data can be saved to smaller output files.
 
-simplifier123 - small script for simplifying tree structure for ROOT DF
+simplifier - small script for simplifying tree structure for ROOT DF
 
 modifiedAnalysis
 is used for calculating cross-sections from event angular distributions
@@ -21,8 +21,11 @@ is used for calculating cross-sections from event angular distributions
 
 	functions with "DT" suffix perform the same for the (d,t) reaction data
 
-printPinDiodes - mini script for drawing graphs with PIN diodes current-voltage characteristics
 
 constants - file with physical constants and geometry info
 
-helloworld
+TODO
+-load .root data files lists to lists
+-perform "translator", "cleaner", "calibratorCaller" and "analysis" on lists of files
+-remove unused methods
+-create function for calculating kinematics
