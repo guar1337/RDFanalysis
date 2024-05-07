@@ -5,8 +5,8 @@
 // found on file: he6_01.root
 //////////////////////////////////////////////////////////
 
-#ifndef simplifier123_h
-#define simplifier123_h
+#ifndef simplifier_h
+#define simplifier_h
 
 #include <TROOT.h>
 #include <TChain.h>
@@ -19,7 +19,7 @@
 // Headers needed by this particular selector
 
 
-class simplifier123 : public TSelector {
+class simplifier : public TSelector {
 public :
    TTreeReader     fReader;  //!the tree reader
    TTree          *fChain = 0;   //!pointer to the analyzed TTree or TChain
@@ -60,8 +60,8 @@ public :
    TTreeReaderValue<Int_t> NeEvent_trigger = {fReader, "NeEvent.trigger"};
    
 
-   simplifier123(TTree * /*tree*/ =0) { }
-   virtual ~simplifier123() { }
+   simplifier(TTree * /*tree*/ =0) { }
+   virtual ~simplifier() { }
    virtual Int_t   Version() const { return 2; }
    virtual void    Begin(TTree *tree);
    virtual void    SlaveBegin(TTree *tree);
@@ -92,14 +92,14 @@ public :
    unsigned short SQX_L[32], SQX_R[32];
    unsigned short tSQX_L[32], tSQX_R[32];
 
-   ClassDef(simplifier123,0);
+   ClassDef(simplifier,0);
 
 };
 
 #endif
 
-#ifdef simplifier123_cxx
-void simplifier123::Init(TTree *tree)
+#ifdef simplifier_cxx
+void simplifier::Init(TTree *tree)
 {
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the reader is initialized.
@@ -111,7 +111,7 @@ void simplifier123::Init(TTree *tree)
    fReader.SetTree(tree);
 }
 
-Bool_t simplifier123::Notify()
+Bool_t simplifier::Notify()
 {
    // The Notify() function is called when a new file is opened. This
    // can be either for a new TTree in a TChain or when when a new TTree
@@ -123,4 +123,4 @@ Bool_t simplifier123::Notify()
 }
 
 
-#endif // #ifdef simplifier123_cxx
+#endif // #ifdef simplifier_cxx

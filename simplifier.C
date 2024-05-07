@@ -1,5 +1,5 @@
-#define simplifier123_cxx
-// The class definition in simplifier123.h has been generated automatically
+#define simplifier_cxx
+// The class definition in simplifier.h has been generated automatically
 // by the ROOT utility TTree::MakeSelector(). This class is derived
 // from the ROOT class TSelector. For more information on the TSelector
 // framework see $ROOTSYS/README/README.SELECTOR or the ROOT User Manual.
@@ -19,17 +19,17 @@
 //
 // To use this file,	try the following session on your Tree T:
 //
-// root> T->Process("simplifier123.C")
-// root> T->Process("simplifier123.C","some options")
-// root> T->Process("simplifier123.C+")
+// root> T->Process("simplifier.C")
+// root> T->Process("simplifier.C","some options")
+// root> T->Process("simplifier.C+")
 //
 
 
-#include "simplifier123.h"
+#include "simplifier.h"
 #include <TH2.h>
 #include <TStyle.h>
 
-void simplifier123::Begin(TTree *inTree)
+void simplifier::Begin(TTree *inTree)
 {
 	// The Begin() function is called at the start of the query.
 	// When running with PROOF Begin() is only called on the client.
@@ -72,7 +72,7 @@ void simplifier123::Begin(TTree *inTree)
   
 }
 
-void simplifier123::SlaveBegin(TTree * /*tree*/)
+void simplifier::SlaveBegin(TTree * /*tree*/)
 {
 	// The SlaveBegin() function is called after the Begin() function.
 	// When running with PROOF SlaveBegin() is called on each slave server.
@@ -82,7 +82,7 @@ void simplifier123::SlaveBegin(TTree * /*tree*/)
 
 }
 
-Bool_t simplifier123::Process(Long64_t entry)
+Bool_t simplifier::Process(Long64_t entry)
 {
 	// The Process() function is called for each entry in the tree (or possibly
 	// keyed object in the case of PROOF) to be processed. The entry argument
@@ -152,14 +152,14 @@ Bool_t simplifier123::Process(Long64_t entry)
 	return kTRUE;
 }
 
-void simplifier123::SlaveTerminate()
+void simplifier::SlaveTerminate()
 {
 	// The SlaveTerminate() function is called after all entries or objects
 	// have been processed. When running with PROOF SlaveTerminate() is called
 	// on each slave server.
 }
 
-void simplifier123::Terminate()
+void simplifier::Terminate()
 {
 	// The Terminate() function is the last function to be called during
 	// a query. It always runs on the client,	it can be used to presenttranslator

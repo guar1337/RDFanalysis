@@ -20,9 +20,10 @@
 //#include "/home/zalewski/aku/TELoss/TELoss.h"
 
 //global variables used by couple of functions
-	Int_t numberOfThreads;
-	TSelector *selector;	
-	TString raw_data_path = "/home/zalewski/dataTmp/raw/geo" + std::to_string(cs::runNo) + "/";
+Int_t numberOfThreads;
+TSelector *selector;	
+TString raw_data_path = "/home/zalewski/dataTmp/raw/geo" + std::to_string(cs::runNo) + "/";
+Bool_t printOnce = true;
 
 	std::vector<std::string> vecCalibratedColumns{"SQX_L",
 												  "SQY_L",
@@ -170,10 +171,10 @@ std::vector<std::string> smallerTree{"kinE",
 	std::vector<std::string> parNames = {"sMWPC_1_X", "sMWPC_1_Y", "sMWPC_2_X", "sMWPC_2_Y", "sLang1", "sLang2", "sLang3", "sRang", "sTarPos", "sDistL", "sDistR"};
 	std::vector<Double_t> parameters(11);
 
-	std::vector< std::vector< float > > vecAcoef;
-	std::vector< std::vector< float > > vecBcoef;
-	std::vector< float > Acoef;
-	std::vector< float > Bcoef;
+	std::vector<std::vector<float>> vecAcoef;
+	std::vector<std::vector<float>> vecBcoef;
+	std::vector<float> Acoef;
+	std::vector<float> Bcoef;
 
 //variables used by cleaner
 	Double_t ToFconstant = cs::tof_const;
@@ -224,8 +225,8 @@ std::vector<std::string> smallerTree{"kinE",
 	double si_Z[1] = {14};
 	double si_W[1] = {1};
 
-	Double_t beamDeadLayer;
-	Double_t ionDeadLayer;
+	Double_t beamDeadLayer = 500.0;
+	Double_t ionDeadLayer = 20.0;
 
 	enum reactionType{elastic, MC, dt, mcDT};
 

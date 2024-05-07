@@ -1,9 +1,9 @@
-#include "/home/zalewski/aku_dec/analysis/ui.hh"
+#include "/home/zalewski/aku/analysis/ui.hh"
 
+//necessary for charged particles energy loss calculation
 R__LOAD_LIBRARY(libgsl.so);
-R__LOAD_LIBRARY(/home/zalewski/aku_dec/ELC/build/libEloss.so);
-//R__LOAD_LIBRARY(/home/zalewski/aku/TELoss/libTELoss.so);
-Bool_t flag=true;
+R__LOAD_LIBRARY(/home/zalewski/aku/ELC/build/libEloss.so);
+
 
 void translator(TString inFileName)
 {
@@ -101,7 +101,6 @@ Double_t getDPRang(Double_t m_thetaCM, TLorentzVector m_lvBeam)
 	m_lv7He.Boost(m_boostVect);
 	return m_lv7He.Angle(m_lvBeam.Vect())*TMath::RadToDeg();
 }
-
 
 //d,t reaction
 Double_t getDTLang(Double_t m_thetaCM, TLorentzVector m_lvBeam, Double_t m_Q)
@@ -674,10 +673,10 @@ Double_t getMissingMass1H(TLorentzVector m_lv1H, TLorentzVector m_lvBeam)
 Double_t getMissingMass2H(TLorentzVector m_lv2H, TLorentzVector m_lvBeam)
 {
 	TLorentzVector m_lvTar(0.0, 0.0, 0.0, cs::mass2H);
-	if (flag)
+	if (printOnce)
 	{
 		printf("m2H: %f\tm6He: %f\n", m_lv2H.M(), m_lvBeam.M());
-		flag=false;
+		printOnce=false;
 	}
 	TLorentzVector m_lv6He = (m_lvBeam + m_lvTar) - m_lv2H;
 	return m_lv6He.M() - cs::mass6He;
@@ -686,10 +685,10 @@ Double_t getMissingMass2H(TLorentzVector m_lv2H, TLorentzVector m_lvBeam)
 Double_t getMissingMass3H(TLorentzVector m_lv3H, TLorentzVector m_lvBeam)
 {
 	TLorentzVector m_lvTar(0.0, 0.0, 0.0, cs::mass2H);
-	if (flag)
+	if (printOnce)
 	{
 		printf("m2H: %f\tm6He: %f\n", m_lv3H.M(), m_lvBeam.M());
-		flag=false;
+		printOnce=false;
 	}
 	TLorentzVector m_lv6He = (m_lvBeam + m_lvTar) - m_lv3H;
 	return m_lv6He.M() - cs::mass5He;
@@ -698,10 +697,10 @@ Double_t getMissingMass3H(TLorentzVector m_lv3H, TLorentzVector m_lvBeam)
 Double_t getMissingMass4He(TLorentzVector m_lv4He, TLorentzVector m_lvBeam)
 {
 	TLorentzVector m_lvTar(0.0, 0.0, 0.0, cs::mass2H);
-	if (flag)
+	if (printOnce)
 	{
 		printf("m2H: %f\tm6He: %f\n", m_lv4He.M(), m_lvBeam.M());
-		flag=false;
+		printOnce=false;
 	}
 	TLorentzVector m_lv3H = (m_lvBeam + m_lvTar) - m_lv4He;
 	return m_lv3H.M() - cs::mass3H;
@@ -710,10 +709,10 @@ Double_t getMissingMass4He(TLorentzVector m_lv4He, TLorentzVector m_lvBeam)
 Double_t getMissingMassN(TLorentzVector m_lv4He, TLorentzVector m_lv3H, TLorentzVector m_lvBeam)
 {
 	TLorentzVector m_lvTar(0.0, 0.0, 0.0, cs::mass2H);
-	if (flag)
+	if (printOnce)
 	{
 		printf("m2H: %f\tm6He: %f\n", m_lv4He.M(), m_lvBeam.M());
-		flag=false;
+		printOnce=false;
 	}
 	TLorentzVector m_neutron = (m_lvBeam + m_lvTar) - (m_lv4He + m_lv3H);
 	return m_neutron.M() - cs::massN;
@@ -1237,7 +1236,7 @@ ROOT::RDF::RNode ApplyGraphicalCuts(ROOT::RDF::RNode df, Int_t cutsType)
 {
 	if (cutsType==elastic)
 	{
-		TFile cutgFile("/home/zalewski/aku_dec/analysis/gcuts.root","READ");
+		TFile cutgFile("/home/zalewski/aku/analysis/gcuts.root","READ");
 		GCutHe4 = (TCutG*)cutgFile.Get("dehe4");
 		GCutHe6 = (TCutG*)cutgFile.Get("dehe6");
 		GCutP = (TCutG*)cutgFile.Get("p");
@@ -1250,21 +1249,21 @@ ROOT::RDF::RNode ApplyGraphicalCuts(ROOT::RDF::RNode df, Int_t cutsType)
 		GCtimeCutR = (TCutG*)cutgFile.Get("timeCutR");
 		GCtimeCutL = (TCutG*)cutgFile.Get("timeCutL");
 
-		TFile dtCutFile("/home/zalewski/aku_dec/analysis/dtCutFile.root","READ");
-		GCutHe4 = (TCutG*)dtCutFile.Get("dehe4");
-		GCutdtLeneLang = (TCutG*)dtCutFile.Get("dtLeneLang");
-		GCutdtLeneRang = (TCutG*)dtCutFile.Get("dtLeneRang");		
-		GCnoProtDeut = (TCutG*)dtCutFile.Get("noProtDeut");
-		GCutdtEneEne = (TCutG*)dtCutFile.Get("dtEneEne");
-		GCutdtAngAng = (TCutG*)dtCutFile.Get("dtAngAng");
-		GCbHe6 = (TCutG*)dtCutFile.Get("bHe6");
-		GCdtTT = (TCutG*)dtCutFile.Get("dtTT");
-		GCdtLTl = (TCutG*)dtCutFile.Get("dtLTl");
-		GCdtLTr = (TCutG*)dtCutFile.Get("dtLTr");
-		GCdtRTl = (TCutG*)dtCutFile.Get("dtRTl");
-		GCdtRTr = (TCutG*)dtCutFile.Get("dtRTr");
-		GCdts1 = (TCutG*)dtCutFile.Get("dts1");
-		GCdts2 = (TCutG*)dtCutFile.Get("dts2");
+		//dt cuts
+		GCutHe4 = (TCutG*)cutgFile.Get("dehe4");
+		GCutdtLeneLang = (TCutG*)cutgFile.Get("dtLeneLang");
+		GCutdtLeneRang = (TCutG*)cutgFile.Get("dtLeneRang");		
+		GCnoProtDeut = (TCutG*)cutgFile.Get("noProtDeut");
+		GCutdtEneEne = (TCutG*)cutgFile.Get("dtEneEne");
+		GCutdtAngAng = (TCutG*)cutgFile.Get("dtAngAng");
+		GCbHe6 = (TCutG*)cutgFile.Get("bHe6");
+		GCdtTT = (TCutG*)cutgFile.Get("dtTT");
+		GCdtLTl = (TCutG*)cutgFile.Get("dtLTl");
+		GCdtLTr = (TCutG*)cutgFile.Get("dtLTr");
+		GCdtRTl = (TCutG*)cutgFile.Get("dtRTl");
+		GCdtRTr = (TCutG*)cutgFile.Get("dtRTr");
+		GCdts1 = (TCutG*)cutgFile.Get("dts1");
+		GCdts2 = (TCutG*)cutgFile.Get("dts2");
 
 		return df.Define("he4", [](Double_t sqretot, Double_t sqrde){return GCutHe4->IsInside(sqretot,sqrde);}, {"sqretot","sqrde"})
 				 .Define("he6", [](Double_t sqretot, Double_t sqrde){return GCutHe6->IsInside(sqretot,sqrde);}, {"sqretot","sqrde"})
@@ -1284,7 +1283,7 @@ ROOT::RDF::RNode ApplyGraphicalCuts(ROOT::RDF::RNode df, Int_t cutsType)
 	
 	else if (cutsType==MC)
 	{
-		TFile MCcutgFile("/home/zalewski/aku_dec/analysis/mcCuts.root","READ");
+		TFile MCcutgFile("/home/zalewski/aku/analysis/gcuts.root","READ");
 		GCutmcHe6 = (TCutG*)MCcutgFile.Get("mcHe6");
 		GCutmcPPAngAng = (TCutG*)MCcutgFile.Get("mcPPAngAng");
 		GCutmcPPLeneLang = (TCutG*)MCcutgFile.Get("mcPPLeneLang");
@@ -1302,23 +1301,23 @@ ROOT::RDF::RNode ApplyGraphicalCuts(ROOT::RDF::RNode df, Int_t cutsType)
 
 	else if (cutsType==dt)
 	{
-		TFile dtCutFile("/home/zalewski/aku_dec/analysis/dtCutFile.root","READ");
-		GCutHe4 = (TCutG*)dtCutFile.Get("dehe4");
-		GCutdtLeneLang = (TCutG*)dtCutFile.Get("dtLeneLang");
-		GCutdtLeneRang = (TCutG*)dtCutFile.Get("dtLeneRang");		
-		GCnoProtDeut = (TCutG*)dtCutFile.Get("noProtDeut");
-		GCutdtEneEne = (TCutG*)dtCutFile.Get("dtEneEne");
-		GCutdtAngAng = (TCutG*)dtCutFile.Get("dtAngAng");
-		GCbHe6 = (TCutG*)dtCutFile.Get("bHe6");
-		GCdtTT = (TCutG*)dtCutFile.Get("dtTT");
-		GCdtLTl = (TCutG*)dtCutFile.Get("dtLTl");
-		GCdtLTr = (TCutG*)dtCutFile.Get("dtLTr");
-		GCdtRTl = (TCutG*)dtCutFile.Get("dtRTl");
-		GCdtRTr = (TCutG*)dtCutFile.Get("dtRTr");
-		GCdts1 = (TCutG*)dtCutFile.Get("dts1");
-		GCdts2 = (TCutG*)dtCutFile.Get("dts2");
-		GCdtmm3H_N = (TCutG*)dtCutFile.Get("dt_mm3H_mmN");
-		GCdtmm4He_N = (TCutG*)dtCutFile.Get("dt_mm4He_mmN");
+		TFile cutgFile("/home/zalewski/aku/analysis/gcuts.root","READ");
+		GCutHe4 = (TCutG*)cutgFile.Get("dehe4");
+		GCutdtLeneLang = (TCutG*)cutgFile.Get("dtLeneLang");
+		GCutdtLeneRang = (TCutG*)cutgFile.Get("dtLeneRang");		
+		GCnoProtDeut = (TCutG*)cutgFile.Get("noProtDeut");
+		GCutdtEneEne = (TCutG*)cutgFile.Get("dtEneEne");
+		GCutdtAngAng = (TCutG*)cutgFile.Get("dtAngAng");
+		GCbHe6 = (TCutG*)cutgFile.Get("bHe6");
+		GCdtTT = (TCutG*)cutgFile.Get("dtTT");
+		GCdtLTl = (TCutG*)cutgFile.Get("dtLTl");
+		GCdtLTr = (TCutG*)cutgFile.Get("dtLTr");
+		GCdtRTl = (TCutG*)cutgFile.Get("dtRTl");
+		GCdtRTr = (TCutG*)cutgFile.Get("dtRTr");
+		GCdts1 = (TCutG*)cutgFile.Get("dts1");
+		GCdts2 = (TCutG*)cutgFile.Get("dts2");
+		GCdtmm3H_N = (TCutG*)cutgFile.Get("dt_mm3H_mmN");
+		GCdtmm4He_N = (TCutG*)cutgFile.Get("dt_mm4He_mmN");
 
 		return df.Define("he4", [](Double_t sqretot, Double_t sqrde){return GCutHe4->IsInside(sqretot,sqrde);}, {"sqretot","sqrde"})
 				 .Define("dtLeneLang", [](Double_t sqlang, Double_t sqlde, Double_t sqletot){return GCutdtLeneLang->IsInside(sqlang, sqlde+sqletot);}, {"sqlang", "sqlde", "sqletot"})
@@ -1343,10 +1342,10 @@ ROOT::RDF::RNode ApplyGraphicalCuts(ROOT::RDF::RNode df, Int_t cutsType)
 
 	else if (cutsType==mcDT)
 	{
-		TFile dtCutFile("/home/zalewski/aku_dec/analysis/dtCutFile.root","READ");
-		GCmcHe4 = (TCutG*)dtCutFile.Get("mcHe4");
-		GCmcLeneLang = (TCutG*)dtCutFile.Get("mcLeneLang");
-		GCutdtAngAng = (TCutG*)dtCutFile.Get("dtAngAng");
+		TFile cutgFile("/home/zalewski/aku/analysis/gcuts.root","READ");
+		GCmcHe4 = (TCutG*)cutgFile.Get("mcHe4");
+		GCmcLeneLang = (TCutG*)cutgFile.Get("mcLeneLang");
+		GCutdtAngAng = (TCutG*)cutgFile.Get("dtAngAng");
 
 		return df.Define("mcHe4", [](Double_t sqretot, Double_t sqrde){return GCmcHe4->IsInside(sqretot, sqrde);}, {"sqretot", "sqrde"})
 				 .Define("dtAngAng", [](Double_t sqrang, Double_t sqlang){return GCutdtAngAng->IsInside(sqrang, sqlang);}, {"sqrang", "sqlang"})
@@ -1384,39 +1383,6 @@ bool filterSQ(ROOT::VecOps::RVec<unsigned short> &SQ, Double_t threshold)
 		}
 	}
 	return sqFlag;
-}
-
-void loadCorrectionParameters(Int_t m_runNo)
-{
-	parameters.clear();
-	std::string line;
-	std::string fName = "/home/zalewski/Desktop/6He/analysis/aligning_v18125/chosen3.txt";
-
-	std::ifstream outStreamGenerated(fName, std::ios::in);
-	if (!outStreamGenerated)
-	{
-		printf("Failed to open file: %s\n", fName.c_str());
-	}
-
-	int jumpTo = m_runNo;
-	for (int iii = 0; iii<jumpTo; iii++)
-	{
-		std::getline(outStreamGenerated, line, ';');
-	}
-	
-	//printf("%s\n", line.c_str());
-
-	float tmpContainer;
-	for (int iii = 0; iii < 12; iii++)
-	{
-		outStreamGenerated>>tmpContainer;
-		if (iii!=0)
-		{
-			parameters.push_back(tmpContainer);
-			printf("%s = %f\t", parNames[iii-1].c_str(), parameters[iii-1]);
-		}
-	}
-	std::cout<<std::endl;
 }
 
 void loadCalibrationParameters()
@@ -1469,12 +1435,6 @@ void loadCalibrationParameters()
 void cleaner(TString inFileName)
 {
 	Double_t MWPCposContainer;
-	if (cs::runNo==5)
-	{
-		ToFconstant = cs::tof_const_5;
-		tdcBinning = 0.0625;
-	}
-	
 	Double_t sqlThreshold = 0.1;
 	Double_t sqrThreshold = 2.0;
 
@@ -1561,7 +1521,7 @@ void calibratorCaller(TString inFileName)
 	dfWithDefines.Snapshot("calibrated", outFilename.Data(), dfWithDefines.GetColumnNames());
 }
 
-void analysis(TString inFileName, Int_t geoID=0)
+void analysis(TString inFileName)
 {
 	inFileName.ReplaceAll("simp","cal");
 	TString treeName = "calibrated";
@@ -1782,71 +1742,56 @@ void miscTranlator()
 
 void ui()
 {
+	//enable multithread
 	ROOT::EnableImplicitMT();
-	TStopwatch stopwatch;
 	
-	beamDeadLayer = 500.0;
-	ionDeadLayer = 20.0;
+	TStopwatch stopwatch;
+	loadCalibrationParameters();
+	
+	//initialize random number generator
+	rnd = new TRandom3();
+
+	//initialize TSelector for changing data structure for RDF-friendly
+	selector = TSelector::GetSelector("/home/zalewski/aku/analysis/simplifier.C");
+
+	//get list of .root data files in each directory
+	getDataFilesLists()
+
+
+	//	
 	if (cs::runNo>1)
 	{
 		ionDeadLayer*=2.0;
 	}
-	
+	TString fileName, dataDirectoryName = "/home/zalewski/dataTmp/simp/geo" + std::to_string(cs::runNo) + "/";
 
-	rnd = new TRandom3();
-	selector = TSelector::GetSelector("/home/zalewski/aku_dec/analysis/simplifier123.C");
-	std::cout<<"..."<<std::endl<<".."<<std::endl<<"."<<std::endl;
+	assert((void("Wrong geometry!"), (cs::runNo==1 || cs::runNo==2 || cs::runNo==3 )));
 
-
-	if (cs::runNo==5)
+	//each file must be processed separately
+	//
+	TSystemDirectory *dataDirectory = new TSystemDirectory("data", dataDirectoryName.Data());
+	TIter fileList = dataDirectory->GetListOfFiles();
+	while (TObject *obj = fileList())
 	{
-		selector = TSelector::GetSelector("/home/zalewski/aku_dec/analysis/simplifier5.C");
-	}
+		fileName = obj->GetName();
+		ToFconstant = cs::tof_const;
 
-	loadCalibrationParameters();
-	//loadCorrectionParameters();
-	TString str_name, sourceDir;
-
-	if (cs::runNo==1 || cs::runNo==2 || cs::runNo==3)
-	{
-		sourceDir = "/home/zalewski/dataTmp/simp/geo" + std::to_string(cs::runNo) + "/";
-	}
-
-	else
-	{
-		printf("Wrong geometry (geo = %d)\tExiting now.\n", cs::runNo);
-
-	}
-
-	TSystemDirectory *dir_data = new TSystemDirectory("data",sourceDir.Data());
-
-	
-	TIter bluster = dir_data->GetListOfFiles();
-	while (TObject *obj = bluster())
-	{
-		str_name = obj->GetName();
-		//std::cout<<str_name<<std::endl;
+		//ToF shifted after 1st file in 1st geometry
 		if (str_name.Contains("run00"))
 		{
 			ToFconstant = cs::tof_const + 7.7;
-		}
-		
+		}		
 
-		if ((str_name.Contains("simp_geo") && !str_name.Contains("li9")) ||
-		(str_name.Contains("mc") && !str_name.Contains("out")))
+		if (fileName.Contains("run"))
 		{
-			TString inputFilePath = sourceDir + str_name;
-			TString versionNumber(str_name(7,1));
-			//printf("fName:\t%s\tversionNo: %d\n",str_name.Data(), versionNumber.Atoi());
-			//translator(inputFilePath);
+			TString inputFilePath = sourceDir + fileName;
+			translator(inputFilePath);
 			cleaner(inputFilePath);
 			calibratorCaller(inputFilePath);
-			analysis(inputFilePath, 0);
-			//makeSmallFile();
+			analysis(inputFilePath);
 		}
 	}
 
-	//loadCorrectionParameters(6);
 
 	//analysis("/home/zalewski/dataTmp/MC/v3/mc_geo1_1H.root", 1);
 	//analysis("/home/zalewski/dataTmp/MC/v3/mc_geo2_1H.root", 2);
@@ -1854,11 +1799,8 @@ void ui()
 	//analysis("/home/zalewski/dataTmp/MC/v3/mc_geo1_2H.root", 1);
 	//analysis("/home/zalewski/dataTmp/MC/v3/mc_geo2_2H.root", 2);
 	//analysis("/home/zalewski/dataTmp/MC/v3/mc_geo3_2H.root", 3);
-	
-
 	//analysis("/home/zalewski/dataTmp/MC/v3/mc_geo2_2H_dt.root", 2);
 
 	//joinDE();
-	//miscTranlator();
 	stopwatch.Print();
 }
